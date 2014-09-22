@@ -1,0 +1,105 @@
+#ifndef TPE_H_INCLUDED
+#define TPE_H_INCLUDED
+
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/file.h>
+#include <linux/mman.h>
+#include <linux/binfmts.h>
+#include <linux/version.h>
+#include <linux/utsname.h>
+#include <linux/kallsyms.h>
+#include <linux/dcache.h>
+#include <linux/fs.h>
+#include <linux/jiffies.h>
+#include <linux/sysctl.h>
+#include <linux/err.h>
+#include <linux/namei.h>
+#include <linux/fs_struct.h>
+#include <linux/mount.h>
+
+#include <asm/uaccess.h>
+#include <asm/insn.h>
+
+#ifndef CONFIG_SECURITY
+#error "This module requires CONFIG_SECURITY to be enabled"
+#endif
+
+#define MODULE_NAME "rtbackup"
+#define PKPRE "[" MODULE_NAME "] "
+#define MAX_FILE_LEN 256
+#define TPE_HARDCODED_PATH_LEN 1024
+
+#define LOG_FLOODTIME 5
+#define LOG_FLOODBURST 5
+
+#define OP_JMP_SIZE 5
+
+#define IN_ERR(x) (x < 0)
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 28)
+#define get_task_uid(task) task->uid
+#define get_task_parent(task) task->parent
+#else
+#define get_task_uid(task) task->cred->uid
+#define get_task_parent(task) task->real_parent
+#endif
+
+// d_path changed argument types. lame
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25)
+#define get_d_path(file, buf, len) d_path(file->f_dentry, file->f_vfsmnt, buf, len);
+#else
+#define get_d_path(file, buf, len) d_path(&file->f_path, buf, len);
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 19)
+#define get_inode(file) file->f_dentry->d_inode;
+#define get_parent_inode(file) file->f_dentry->d_parent->d_inode;
+#else
+#define get_inode(file) file->f_path.dentry->d_inode;
+#define get_parent_inode(file) file->f_path.dentry->d_parent->d_inode;
+#endif
+
+
+struct kernsym {
+	void *addr; // orig addr
+	void *end_addr;
+	unsigned long size;
+	char *name;
+	bool name_alloc; // whether or not we alloc'd memory for char *name
+	u8 orig_start_bytes[OP_JMP_SIZE];
+	void *new_addr;
+	unsigned long new_size;
+	bool found;
+	bool hijacked;
+	void *run;
+};
+
+int symbol_hijack(struct kernsym *, const char *, unsigned long *);
+void symbol_restore(struct kernsym *);
+
+void hijack_syscalls(void);
+void undo_hijack_syscalls(void);
+
+void symbol_info(struct kernsym *);
+
+int find_symbol_address(struct kernsym *, const char *);
+
+int kernfunc_init(void);
+
+void rtb_insn_init(struct insn *, const void *);
+void rtb_insn_get_length(struct insn *insn);
+int rtb_insn_rip_relative(struct insn *insn);
+
+void *malloc(unsigned long size);
+void malloc_free(void *buf);
+
+int getabsparentpath(const char * pathname,char *abspath);
+int getabsparentpathfromdentry(struct dentry *dentry,char *abspath);
+int getabsfullpathfromdentry(struct dentry *dentry, char *abspath);
+int getabsfullpath(const char *pathname, char *abspath);
+
+
+#endif
