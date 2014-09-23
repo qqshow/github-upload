@@ -1,6 +1,24 @@
+/********************************************************************************
 
+ **** Copyright (C), 2014, unary Co., Ltd.                ****
 
-#define TPE_H_INCLUDED
+ ********************************************************************************
+ * File Name     : module.h
+ * Author        : lb
+ * Date          : 2014-09-19
+ * Description   : module header file.
+ * Version       : 1.0
+ * Function List :
+ * 
+ * Record        :
+ * 1.Date        : 2014-09-19
+ *   Author      : lb
+ *   Modification: Created file
+
+*************************************************************************************************************/
+
+#ifndef MODULE_H_INCLUDED
+#define MODULE_H_INCLUDED
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -62,7 +80,7 @@
 #define get_parent_inode(file) file->f_path.dentry->d_parent->d_inode;
 #endif
 
-
+// 
 struct kernsym {
 	void *addr; // orig addr
 	void *end_addr;
@@ -76,6 +94,7 @@ struct kernsym {
 	bool hijacked;
 	void *run;
 };
+
 
 int symbol_hijack(struct kernsym *, const char *, unsigned long *);
 void symbol_restore(struct kernsym *);

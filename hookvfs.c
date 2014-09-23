@@ -1,3 +1,22 @@
+/********************************************************************************
+
+ **** Copyright (C), 2014, unary Co., Ltd.                ****
+
+ ********************************************************************************
+ * File Name     : hookvfs.c
+ * Author        : lb
+ * Date          : 2014-09-19
+ * Description   : hook vfs functions for real time backup data.
+ * Version       : 1.0
+ * Function List :
+ * 
+ * Record        :
+ * 1.Date        : 2014-09-19
+ *   Author      : lb
+ *   Modification: Created file
+
+*************************************************************************************************************/
+
 #include "module.h"
 
 // vfs function definition
@@ -25,6 +44,7 @@ struct kernsym sym_vfs_unlink;
 struct kernsym sym_vfs_rename;
 
 
+// hijack for rename file or dir
 int (rtb_vfs_rename)(struct inode *old_dir, struct dentry *old_dentry,
 	       struct inode *new_dir, struct dentry *new_dentry)
 {
@@ -59,6 +79,7 @@ out:
 
 }
 
+//hijack for delete file 
 int (rtb_vfs_unlink)(struct inode *dir, struct dentry *dentry)
 {
     int(*run)(struct inode *,struct dentry *) = sym_vfs_unlink.run;
@@ -86,6 +107,7 @@ int (rtb_vfs_unlink)(struct inode *dir, struct dentry *dentry)
 
 }
 
+//hijack for rmdir
 int (rtb_vfs_rmdir)(struct inode *dir, struct dentry *dentry)
 {
     int(*run)(struct inode *,struct dentry *) = sym_vfs_rmdir.run;
@@ -114,6 +136,7 @@ int (rtb_vfs_rmdir)(struct inode *dir, struct dentry *dentry)
 
 }
 
+//hijack for create file
 int (rtb_vfs_create)(struct inode *dir, struct dentry *dentry, int mode,
 		struct nameidata *nd)
 {
@@ -148,7 +171,7 @@ out:
 	return ret;
 }
 
-// create symbolic link
+// hijack for create symbolic link
 int (rtb_vfs_symlink)(struct inode *dir, struct dentry *dentry, const char *oldname)
 {
 		int(*run)(struct inode *,struct dentry *, const char *) = sym_vfs_symlink.run;
@@ -182,7 +205,7 @@ int (rtb_vfs_symlink)(struct inode *dir, struct dentry *dentry, const char *oldn
 
 }
 
-// create hark link
+// hijack for create hark link
 int (rtb_vfs_link)(struct dentry *old_dentry, struct inode *dir, struct dentry *new_dentry)
 {
 		int(*run)(struct dentry *,struct inode *, struct dentry *) = sym_vfs_link.run;
@@ -217,6 +240,7 @@ int (rtb_vfs_link)(struct dentry *old_dentry, struct inode *dir, struct dentry *
 
 }
 
+//hijack for mkdir
 int (rtb_vfs_mkdir)(struct inode *dir, struct dentry *dentry, int mode)
 {
     int(*run)(struct inode *,struct dentry *, int) = sym_vfs_mkdir.run;
@@ -243,7 +267,7 @@ int (rtb_vfs_mkdir)(struct inode *dir, struct dentry *dentry, int mode)
     return ret;   
 }
 
-// mmap
+// hijack for sys_mkdir
 long (rtb_sys_mkdir)(const char __user *pathname, int mode)
 {
     long(*run)(const char __user *, int) = sym_sys_mkdir.run;
@@ -282,6 +306,8 @@ long (rtb_sys_mkdir)(const char __user *pathname, int mode)
         kfree(abspath);
     return ret;
 }
+
+//hijack for sys_write
 long (rtb_sys_write)(unsigned int fd, const char __user *buf, size_t count)
 {
     long(*run)(unsigned int, const char __user *, size_t) = sym_sys_write.run;
@@ -294,6 +320,7 @@ long (rtb_sys_write)(unsigned int fd, const char __user *buf, size_t count)
     return ret;
 }
 
+//hijack for vfs_write
 ssize_t rtb_vfs_write(struct file *file, const char __user *buf, size_t count, loff_t *pos)
 {
     ssize_t(*run)(struct file *, const char __user *, size_t, loff_t *) = sym_vfs_write.run;
@@ -338,10 +365,8 @@ struct symhook {
 };
 
 struct symhook security2hook[] = {
-    //{"sys_write", &sym_sys_write,(unsigned long *)rtb_sys_write},
     {"vfs_write", &sym_vfs_write,(unsigned long *)rtb_vfs_write},
     {"vfs_mkdir", &sym_vfs_mkdir, (unsigned long *)rtb_vfs_mkdir},
-    //{"sys_mkdir", &sym_sys_mkdir, (unsigned long *)rtb_sys_mkdir},
     {"vfs_rmdir", &sym_vfs_rmdir, (unsigned long *)rtb_vfs_rmdir},
     {"vfs_rename", &sym_vfs_rename, (unsigned long *)rtb_vfs_rename},
     {"vfs_unlink", &sym_vfs_unlink, (unsigned long *)rtb_vfs_unlink},
@@ -350,8 +375,7 @@ struct symhook security2hook[] = {
     {"vfs_create", &sym_vfs_create, (unsigned long *)rtb_vfs_create},
 };
 
-// hijack the needed functions. whenever possible
-
+// hijack the needed functions. 
 void hijack_syscalls(void) {
 
 	int ret, i;
@@ -365,6 +389,7 @@ void hijack_syscalls(void) {
 
 }
 
+//unhijack functions
 void undo_hijack_syscalls(void) {
 	int i;
 

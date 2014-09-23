@@ -1,5 +1,42 @@
+/********************************************************************************
+
+ **** Copyright (C), 2014, unary Co., Ltd.                ****
+
+ ********************************************************************************
+ * File Name     : getpath.c
+ * Author        : lb
+ * Date          : 2014-09-19
+ * Description   : get absolutely path from dentry or struct file
+ * Version       : 1.0
+ * Function List :
+ * 
+ * Record        :
+ * 1.Date        : 2014-09-19
+ *   Author      : lb
+ *   Modification: Created file. Bugs in get file abs path from dentry, missing mount point path.
+ *
+ * 
+ *
+
+*************************************************************************************************************/
+
+
 #include "module.h"
 
+/*****************************************************************************
+ * Function      : getabsparentpath
+ * Description   : get abs parent path 
+ * Input         : const char * pathname  
+                char *abspath          
+ * Output        : None
+ * Return        : 
+ * Others        : 
+ * Record
+ * 1.Date        : 20140919
+ *   Author      : lb
+ *   Modification: Created function
+
+*****************************************************************************/
 int getabsparentpath(const char * pathname,char *abspath)
 {
 	int ret = 0,depth = 0, i = 0;
@@ -51,6 +88,20 @@ int getabsparentpath(const char * pathname,char *abspath)
 
 }
 
+/*****************************************************************************
+ * Function      : getabsparentpathfromdentry
+ * Description   : get parent abs path from dentry
+ * Input         : struct dentry *dentry  
+                char *abspath          
+ * Output        : None
+ * Return        : 
+ * Others        : 
+ * Record
+ * 1.Date        : 20140919
+ *   Author      : lb
+ *   Modification: Created function. Missing mount point path.
+
+*****************************************************************************/
 int getabsparentpathfromdentry(struct dentry *dentry,char *abspath)
 {
 	int ret = 0,depth = 0, i = 0;
@@ -98,6 +149,20 @@ int getabsparentpathfromdentry(struct dentry *dentry,char *abspath)
 
 }
 
+/*****************************************************************************
+ * Function      : getabsfullpathfromdentry
+ * Description   : get full abs path from dentry
+ * Input         : struct dentry *dentry  
+                char *abspath          
+ * Output        : None
+ * Return        : 
+ * Others        : 
+ * Record
+ * 1.Date        : 20140923
+ *   Author      : lb
+ *   Modification: Created function
+
+*****************************************************************************/
 int getabsfullpathfromdentry(struct dentry *dentry, char *abspath)
 {
 	int ret = 0;
@@ -115,7 +180,20 @@ int getabsfullpathfromdentry(struct dentry *dentry, char *abspath)
 	return 0;
 }
 
+/*****************************************************************************
+ * Function      : getabsfullpath
+ * Description   : get abs full path
+ * Input         : const char *pathname  
+                char *abspath         
+ * Output        : None
+ * Return        : 
+ * Others        : 
+ * Record
+ * 1.Date        : 20140919
+ *   Author      : lb
+ *   Modification: Created function
 
+*****************************************************************************/
 int getabsfullpath(const char *pathname, char *abspath)
 {
 	int ret = 0;
@@ -133,9 +211,28 @@ int getabsfullpath(const char *pathname, char *abspath)
 	return 0;
 }
 
-// copy and modify from 
-//http://stackoverflow.com/questions/8250078/how-can-i-get-a-filename-from-a-file-descriptor-inside-a-kernel-module
-//by lb 20140923
+
+/*****************************************************************************
+ * Function      : getabsfullpathfromstructfile
+ * Description   : get abs full path from struct file
+ * Input         : struct file * file  
+                char *abspath       
+ * Output        : None
+ * Return        : 
+ * Others        : 
+ * Record
+ * 1.Date        : 20140919
+ *   Author      : lb
+ *   Modification: Created function
+ *
+ * 2.Date		 : 20140923
+ *	 Author		 : lb
+ *   Modification: copy and modify from 
+ * 		http://stackoverflow.com/questions/8250078/how-can-i-get-a-filename-from-a-file-descriptor-inside-a-kernel-module
+ *      Modify to support kernel < 2.6.25.
+ * 
+
+*****************************************************************************/
 int getabsfullpathfromstructfile(struct file * file, char *abspath)
 {
 	int ret = 0;
