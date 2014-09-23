@@ -1,4 +1,5 @@
-#ifndef TPE_H_INCLUDED
+
+
 #define TPE_H_INCLUDED
 
 #include <linux/init.h>
@@ -25,7 +26,6 @@
 #ifndef CONFIG_SECURITY
 #error "This module requires CONFIG_SECURITY to be enabled"
 #endif
-
 #define MODULE_NAME "rtbackup"
 #define PKPRE "[" MODULE_NAME "] "
 #define MAX_FILE_LEN 256

@@ -8,7 +8,7 @@ ifeq ($(KERNELRELEASE),)
 MODULE_SOURCES := \
     module.c \
     getpath.c \
-	security.c \
+	hookvfs.c \
 	symbols.c \
 	kernfunc.c \
 	hijacks.c
@@ -39,7 +39,7 @@ obj-m := $(MODULE_NAME).o
 $(MODULE_NAME)-y := \
 	module.o \
     getpath.o \
-	security.o \
+	hookvfs.o \
 	symbols.o \
 	kernfunc.o \
 	hijacks.o
