@@ -38,8 +38,12 @@
 #include <linux/fs_struct.h>
 #include <linux/mount.h>
 
+
 #include <asm/uaccess.h>
 #include <asm/insn.h>
+
+#include <fruk.h>
+
 
 #ifndef CONFIG_SECURITY
 #error "This module requires CONFIG_SECURITY to be enabled"

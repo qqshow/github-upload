@@ -11,8 +11,7 @@ MODULE_SOURCES := \
 	hookvfs.c \
 	symbols.c \
 	kernfunc.c \
-	hijacks.c \
-    redblack.c
+	hijacks.c 
 
 KBUILD_DIR=$(shell sh ./scripts/find_kernel_src.sh)
 UNAME=$(shell uname -r)
@@ -43,7 +42,6 @@ $(MODULE_NAME)-y := \
 	hookvfs.o \
 	symbols.o \
 	kernfunc.o \
-	hijacks.o \
-    redblack.o
+	hijacks.o
 
 endif
