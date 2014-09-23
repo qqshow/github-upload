@@ -100,6 +100,8 @@ int getabsparentpath(const char * pathname,char *abspath);
 int getabsparentpathfromdentry(struct dentry *dentry,char *abspath);
 int getabsfullpathfromdentry(struct dentry *dentry, char *abspath);
 int getabsfullpath(const char *pathname, char *abspath);
+int getabsfullpathfromstructfile(struct file * file, char *abspath);
+
 
 
 #endif

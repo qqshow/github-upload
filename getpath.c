@@ -46,7 +46,7 @@ int getabsparentpath(const char * pathname,char *abspath)
 	  	}
 	  }
 	}
-	printk("parent abs path %s \n",abspath);
+	//printk("parent abs path %s \n",abspath);
 	return ret;
 
 }
@@ -93,7 +93,7 @@ int getabsparentpathfromdentry(struct dentry *dentry,char *abspath)
 	  	}
 	  }
 	}
-	printk("parent abs path %s \n",abspath);
+	//printk("parent abs path %s \n",abspath);
 	return ret;
 
 }
@@ -103,18 +103,13 @@ int getabsfullpathfromdentry(struct dentry *dentry, char *abspath)
 	int ret = 0;
     if(dentry)
     {
-    	if(strncmp(dentry->d_name.name,"/",strlen("/")) == 0)
-        {
-            printk("1\n");
-            strncpy(abspath,dentry->d_name.name,dentry->d_name.len);
-        }
-        else
+    	if(strncmp(dentry->d_parent->d_name.name,"/",strlen("/")) != 0)
         {
             ret = getabsparentpathfromdentry(dentry,abspath);
-            strncat(abspath, "/", strlen("/"));
-            strncat(abspath, dentry->d_name.name, dentry->d_name.len);
         }
-        printk("Full abs path %s \n",abspath);
+		strncat(abspath, "/", strlen("/"));
+        strncat(abspath, dentry->d_name.name, dentry->d_name.len);
+        //printk("Full abs path %s \n",abspath);
     }
 
 	return 0;
@@ -134,6 +129,36 @@ int getabsfullpath(const char *pathname, char *abspath)
 	  strncat(abspath, "/", 2);
       strncat(abspath, pathname, strlen(pathname));
 	}
-	printk("Full abs path %s \n",abspath);
+	//printk("Full abs path %s \n",abspath);
 	return 0;
+}
+
+// copy and modify from 
+//http://stackoverflow.com/questions/8250078/how-can-i-get-a-filename-from-a-file-descriptor-inside-a-kernel-module
+//by lb 20140923
+int getabsfullpathfromstructfile(struct file * file, char *abspath)
+{
+	int ret = 0;
+	
+	char *tmp = NULL;
+	char *pathname;
+	struct path path;
+	path = file->f_path;
+	path_get(&file->f_path);
+	tmp = (char *)__get_free_page(GFP_TEMPORARY);
+	if(!tmp){
+		path_put(&path);
+		return -ENOMEM;;
+	}
+
+	pathname = get_d_path(file, tmp, PATH_MAX);
+
+
+	path_put(&path);
+	strcat(abspath,pathname);
+	if(tmp)
+		free_page((unsigned long)tmp);
+
+	return ret;
+	
 }
