@@ -12,7 +12,8 @@ MODULE_SOURCES := \
 	symbols.c \
 	kernfunc.c \
 	hijacks.c \
-    fileop.c
+    fileop.c \
+    createiolog.c
 
 KBUILD_DIR=$(shell sh ./scripts/find_kernel_src.sh)
 UNAME=$(shell uname -r)
@@ -44,6 +45,7 @@ $(MODULE_NAME)-y := \
 	symbols.o \
 	kernfunc.o \
 	hijacks.o \
-    fileop.o
+    fileop.o \
+    createiolog.o
 
 endif

@@ -40,6 +40,8 @@ Environment:
 #ifndef _FILEREPLUK_H
 #define _FILEREPLUK_H
 
+#include "module.h"
+
 #pragma pack(1)
 
 //
@@ -118,37 +120,6 @@ Environment:
 #define FILTER_TYPE_DIR         2
 #define FILTER_TYPE_SET         3
 
-#if defined(__linux__)
-    #define ULONG unsigned long
-    #define ULONGLONG unsigned long long
-    #define WCHAR char
-
-    typedef struct _GUID {
-        unsigned long  Data1;
-        unsigned short Data2;
-        unsigned short Data3;
-        unsigned char  Data4[ 8 ];
-    } GUID;
-
-    #if defined(MIDL_PASS)
-    typedef struct _LARGE_INTEGER {
-    #else // MIDL_PASS
-    typedef union _LARGE_INTEGER {
-        struct {
-            unsigned long LowPart;
-            unsigned long HighPart;
-        };
-        struct {
-            unsigned long LowPart;
-            unsigned long HighPart;
-        } u;
-    #endif //MIDL_PASS
-        unsigned long long QuadPart;
-    } LARGE_INTEGER;
-#endif
-
-
-
 
 typedef struct _FILTER_ITEM_
 {
@@ -202,6 +173,8 @@ typedef struct _FILEREPL_REPLY
 #define LOG_FILE_TYPE_DELETEFILE    5  // É¾³ýÎÄ¼þ
 #define LOG_FILE_TYPE_RENAMEFILE    6  // ÎÄ¼þ¸ÄÃû
 #define LOG_FILE_TYPE_MOVEIN        7  //¼à¿ØÍâµ½¼à¿ØÄÚ
+#define LOG_FILE_TYPE_HARDLINK      8  // ´´½¨ÈÓ²Á´½Ó
+#define LOG_FILE_TYPE_SOFTLINK	    9  // ´´½¨ÈíÁ´½Ó
 
 //
 // IOÈÕÖ¾ÎÄ¼þÍ·£¬¸ÃÍ·½á¹¹¹Ì¶¨³¤¶ÈLOG_FILE_HEADER_SIZE×Ö½Ú£¬Í·½á¹¹ºóÊÇIOµÄÎÄ¼þÊý¾Ý

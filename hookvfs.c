@@ -18,6 +18,7 @@
 *************************************************************************************************************/
 
 #include "module.h"
+#include "createiolog.h"
 
 // vfs function definition
 /*
@@ -44,6 +45,16 @@ struct kernsym sym_vfs_unlink;
 struct kernsym sym_vfs_rename;
 
 
+// check need to log or not
+int checkneedtolog(char *abspath)
+{
+	if(strncmp(abspath,"/iologs/",strlen("/iologs/")) != 0 && strncmp(abspath,"/dev/",strlen("/dev/")) != 0\
+		&& strncmp(abspath,"/var/log/",strlen("/var/log/")) != 0)
+		return 1;
+	else
+		return 0;
+}
+
 // hijack for rename file or dir
 int (rtb_vfs_rename)(struct inode *old_dir, struct dentry *old_dentry,
 	       struct inode *new_dir, struct dentry *new_dentry)
@@ -68,7 +79,9 @@ int (rtb_vfs_rename)(struct inode *old_dir, struct dentry *old_dentry,
 
 out:
 	ret = run(old_dir,old_dentry,new_dir,new_dentry);
-	
+	/* move include move in and move out. Don't forget to deal with .   add by lb, 2014-09-24 */ 
+	if(ret == 0 && (checkneedtolog(oldabspath) || checkneedtolog(newabspath)))
+		createiologforrename(getseqno(),oldabspath,newabspath);
 	if(oldabspath)
         kfree(oldabspath);
 
@@ -100,6 +113,8 @@ int (rtb_vfs_unlink)(struct inode *dir, struct dentry *dentry)
     getabsfullpathfromdentry(dentry,abspath);
 	printk("vfs_unlink %s.\n",abspath);
     ret = run(dir,dentry);
+	if(ret == 0 && checkneedtolog(abspath))
+		createiologforrmfile(getseqno(),abspath);
 	if(abspath)
         kfree(abspath);
     return ret;   
@@ -128,7 +143,11 @@ int (rtb_vfs_rmdir)(struct inode *dir, struct dentry *dentry)
     printk("dentry->dname %s.\n",dentry->d_name.name);
     printk("dentry->dparent  %s.\n",dentry->d_parent->d_name.name);
     getabsfullpathfromdentry(dentry,abspath);
+	printk("vfs_rmdir %s.\n",abspath);
     ret = run(dir,dentry);
+	printk("vfs_rmdir return %d.\n",abspath);
+	if(ret == 0 && checkneedtolog(abspath))
+		createiologforrmdir(getseqno(), abspath);
 	if(abspath)
         kfree(abspath);
     return ret;   
@@ -168,6 +187,8 @@ out:
 	if(abspath)
 		kfree(abspath);
 	ret = run(dir,dentry,mode,nd);
+	if(ret == 0 && checkneedtolog(abspath))
+		createiologforcreatefile(getseqno(),abspath,mode);
 	return ret;
 }
 
@@ -197,6 +218,9 @@ int (rtb_vfs_symlink)(struct inode *dir, struct dentry *dentry, const char *oldn
 		printk("create symlink from %s to %s\n",oldabspath,newabspath);
 	out:
 		ret = run(dir,dentry,oldname);
+		printk("create symlink return %d.\n",ret);
+		if(ret == 0 && checkneedtolog(newabspath))
+			createiologforcreatesymlink(getseqno(),newabspath,oldabspath);
 		if(oldabspath)
 			kfree(oldabspath);
 		if(newabspath)
@@ -231,6 +255,8 @@ int (rtb_vfs_link)(struct dentry *old_dentry, struct inode *dir, struct dentry *
 		printk("create hardlink from %s to %s\n",oldabspath,newabspath);
 	out:
 		ret = run(old_dentry,dir,new_dentry);
+		if(ret == 0 && checkneedtolog(newabspath))
+			createiologforcreatesymlink(getseqno(),newabspath,oldabspath);
 		if(oldabspath)
 			kfree(oldabspath);
 		if(newabspath)
@@ -260,8 +286,13 @@ int (rtb_vfs_mkdir)(struct inode *dir, struct dentry *dentry, int mode)
     
     printk("dentry->dname %s.\n",dentry->d_name.name);
     printk("dentry->dparent  %s.\n",dentry->d_parent->d_name.name);
-    getabsfullpathfromdentry(dentry,abspath);
+    getabsfullpathfromdentry(dentry,abspath);		
+	printk("vfs_mkdir %s.\n",abspath);
     ret = run(dir,dentry,mode);
+	printk("vfs_mkdir return %d.\n",ret);
+	if(ret == 0 && checkneedtolog(abspath))
+		createiologformkdir(getseqno(),abspath, mode);
+out:
 	if(abspath)
         kfree(abspath);
     return ret;   
@@ -350,6 +381,8 @@ ssize_t rtb_vfs_write(struct file *file, const char __user *buf, size_t count, l
  	if(abspath)
 		kfree(abspath);
     ret = run(file,buf,count,pos);
+	if(ret > 0 && checkneedtolog(abspath))
+		createiologforwrite(getseqno(),abspath,buf,count,pos);
     return ret;
 }
 
