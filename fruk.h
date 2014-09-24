@@ -1,3 +1,22 @@
+/********************************************************************************
+
+ **** Copyright (C), 2014, unary Co., Ltd.                ****
+
+ ********************************************************************************
+ * File Name     : fruk.h
+ * Author        : lb
+ * Date          : 2014-09-23
+ * Description   : Io log defintion 
+ * Version       : 1.0
+ * Function List :
+ * 
+ * Record        :
+ * 1.Date        : 2014-09-23
+ *   Author      : lb
+ *   Modification: Created file. Copy from windows real time backup module. Changed some difintion.
+
+*************************************************************************************************************/
+
 /*++
 
 Copyright (c) 1999-2002  Microsoft Corporation
