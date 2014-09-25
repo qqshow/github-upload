@@ -40,7 +40,7 @@ Environment:
 #ifndef _FILEREPLUK_H
 #define _FILEREPLUK_H
 
-#include "module.h"
+
 
 #pragma pack(1)
 
