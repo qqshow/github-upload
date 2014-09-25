@@ -1,7 +1,10 @@
+#include "Module.h"
 #include <asm/segment.h>
 #include <linux/buffer_head.h>
 #include <linux/unistd.h>
 #include "fileop.h"
+
+
 
 struct file* file_open(const char* path, int flags, int rights)
 {
@@ -42,9 +45,9 @@ int file_write(struct file* file, unsigned long long offset, unsigned char* data
 
     oldfs = get_fs();
     set_fs(get_ds());
-
+	printk("file_write  f_flags %d\n",file->f_flags);
+	
     ret = vfs_write(file, data, size, &(offset));
-	//ret = file->f_op->read(file, data, size, &(offset));
     
     set_fs(oldfs);
     return ret;

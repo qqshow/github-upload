@@ -93,8 +93,6 @@ out:
 int createiologforcreatefile(ulonglong ullSeqNo, char *abspath,int mode)
 {
 
-		return 0;
-		
 		int iret = -1;
 		char iologpath[NAME_MAX] = {0};
 		PLOG_FILE iologfile = NULL;
@@ -221,7 +219,6 @@ int createiologforrmfile(ulonglong ullSeqNo, char *abspath)
 
 int createiologforrename(ulonglong ullSeqNo, char *oldabspath, char *newabspath)
 {
-		return 0;
 		int iret = -1;
 		char iologpath[NAME_MAX] = {0};
 		PLOG_FILE iologfile = NULL;
@@ -271,7 +268,6 @@ int createiologforrename(ulonglong ullSeqNo, char *oldabspath, char *newabspath)
 
 int createiologforcreatesymlink(ulonglong ullSeqNo, char *symlinkabspath, char *dstabspath)
 {
-	return 0;
 	int iret = -1;
 	char iologpath[NAME_MAX] = {0};
 	PLOG_FILE iologfile = NULL;
@@ -321,7 +317,6 @@ out:
 
 int createiologforcreatelink(ulonglong ullSeqNo, char *linkabspath, char *dstabspath)
 {
-		return 0;
 		int iret = -1;
 		char iologpath[NAME_MAX] = {0};
 		PLOG_FILE iologfile = NULL;
@@ -370,7 +365,7 @@ int createiologforcreatelink(ulonglong ullSeqNo, char *linkabspath, char *dstabs
 
 int createiologforwrite(ulonglong ullSeqNo, char *abspath,char *writebuff, size_t count, loff_t *pos)
 {
-		return 0;
+
 		int iret = -1;
 		char iologpath[NAME_MAX] = {0};
 		PLOG_FILE iologfile = NULL;

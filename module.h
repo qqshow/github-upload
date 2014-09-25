@@ -132,6 +132,16 @@ struct kernsym {
 	void *run;
 };
 
+extern struct kernsym sym_vfs_mkdir;
+extern struct kernsym sym_vfs_write;
+extern struct kernsym sym_vfs_create;
+extern struct kernsym sym_vfs_symlink;
+extern struct kernsym sym_vfs_link;
+extern struct kernsym sym_vfs_rmdir;
+extern struct kernsym sym_vfs_unlink;
+extern struct kernsym sym_vfs_rename;
+
+
 
 int symbol_hijack(struct kernsym *, const char *, unsigned long *);
 void symbol_restore(struct kernsym *);

@@ -240,6 +240,11 @@ int getabsfullpathfromstructfile(struct file * file, char *abspath)
 	char *tmp = NULL;
 	char *pathname;
 	struct path path;
+	if(file == NULL )
+	{
+			return ret;
+	}
+		
 	path = file->f_path;
 	path_get(&file->f_path);
 	tmp = (char *)__get_free_page(GFP_TEMPORARY);

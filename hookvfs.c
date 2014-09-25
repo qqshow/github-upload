@@ -32,9 +32,6 @@ extern int vfs_unlink(struct inode *, struct dentry *);
 extern int vfs_rename(struct inode *, struct dentry *, struct inode *, struct dentry *);
 */
 
-struct kernsym sym_sys_mkdir;
-struct kernsym sym_sys_write;
-
 struct kernsym sym_vfs_mkdir;
 struct kernsym sym_vfs_write;
 struct kernsym sym_vfs_create;
@@ -45,11 +42,14 @@ struct kernsym sym_vfs_unlink;
 struct kernsym sym_vfs_rename;
 
 
+
 // check need to log or not
 int checkneedtolog(char *abspath)
 {
-	if(strncmp(abspath,"/iologs/",strlen("/iologs/")) != 0 && strncmp(abspath,"/dev/",strlen("/dev/")) != 0\
-		&& strncmp(abspath,"/var/log/",strlen("/var/log/")) != 0)
+
+	if(strncmp(abspath,"/test/",strlen("/test/")) == 0 )
+//	if(strncmp(abspath,"/iologs/",strlen("/iologs/")) != 0 && strncmp(abspath,"/dev/",strlen("/dev/")) != 0\
+//		&& strncmp(abspath,"/var/log/",strlen("/var/log/")) != 0)
 		return 1;
 	else
 		return 0;
@@ -298,70 +298,22 @@ out:
     return ret;   
 }
 
-// hijack for sys_mkdir
-long (rtb_sys_mkdir)(const char __user *pathname, int mode)
-{
-    long(*run)(const char __user *, int) = sym_sys_mkdir.run;
-	long ret=0,iret=0;
-    
-    char *abspath = NULL;
-	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
-	if(abspath == NULL)
-	{
-		goto out;
-	}
-	memset(abspath,0,PATH_MAX);
-	
-
-	printk("mkdir %s\n",pathname);
-	iret = getabsfullpath(pathname,abspath);
-    
-    if(strncmp(pathname,"lbtest123",sizeof("lbtest123")) == 0)
-    {
-        printk("mkdir %s denied\n",pathname);
-        ret = -1;
-        goto out;
-    }
-    
-    ret = run(pathname,mode);
-    if(ret >= 0)
-    {
-        printk("mkdir success %ld\n",ret);
-    }
-    else
-    {
-        printk("mkdir failed %ld\n",ret);
-    }
-    out:
-    if(abspath)
-        kfree(abspath);
-    return ret;
-}
-
-//hijack for sys_write
-long (rtb_sys_write)(unsigned int fd, const char __user *buf, size_t count)
-{
-    long(*run)(unsigned int, const char __user *, size_t) = sym_sys_write.run;
-	long ret;
-    if(fd)
-    {
-        printk("sys write...\n");
-    }
-    ret = run(fd,buf,count);
-    return ret;
-}
 
 //hijack for vfs_write
-ssize_t rtb_vfs_write(struct file *file, const char __user *buf, size_t count, loff_t *pos)
+ssize_t (rtb_vfs_write)(struct file *file, const char __user *buf, size_t count, loff_t *pos)
 {
     ssize_t(*run)(struct file *, const char __user *, size_t, loff_t *) = sym_vfs_write.run;
 	ssize_t ret;
 	int iret = 0;
     char *abspath = NULL;
+
+	if(file->f_flags == 1)
+		return run(file,buf,count,pos);
+	
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
 	if(abspath == NULL)
 	{
-		goto out;
+		return run(file,buf,count,pos);
 	}
 	memset(abspath,0,PATH_MAX);
 
@@ -373,16 +325,20 @@ ssize_t rtb_vfs_write(struct file *file, const char __user *buf, size_t count, l
 						strncmp(abspath,"/dev",strlen("/dev")) != 0
 			)
 		{
-			printk("vfs_write file %s. count is %zu, offset is %lld.\n",abspath,count,*pos);
+			printk("vfs_write file %s. count is %zu, offset is %lld. f_flags %d\n",abspath,count,*pos,file->f_flags);
+			printk("%x\n",run);
     }
 
+	if(checkneedtolog(abspath))
+		createiologforwrite(getseqno(),abspath,buf,count,pos);
+	ret = run(file,buf,count,pos);
+//	if(ret > 0 && checkneedtolog(abspath))
+//		createiologforwrite(getseqno(),abspath,buf,count,pos);
 	
  out:  
  	if(abspath)
 		kfree(abspath);
-    ret = run(file,buf,count,pos);
-	if(ret > 0 && checkneedtolog(abspath))
-		createiologforwrite(getseqno(),abspath,buf,count,pos);
+
     return ret;
 }
 
