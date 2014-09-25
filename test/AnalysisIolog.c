@@ -45,46 +45,46 @@
 
 
 //dump LOG_FILE info
-int dump(LOG_FILE iologfile)
+int dump(LOG_FILE *iologfile)
 {
 	printf("-------------------------------------------------\n");
-	switch(iologfile.hdr.ulType)
+	switch(iologfile->hdr.ulType)
 	{
 		case LOG_FILE_TYPE_DELETEFILE:
-			printf(RED"%lld\n", iologfile.hdr.ullSeqNo);
-			printf(RED"DELETE FILE %s\n",iologfile.hdr.wszFilePath);
+			printf(RED"%lld\n", iologfile->hdr.ullSeqNo);
+			printf(RED"DELETE FILE %s\n",iologfile->hdr.wszFilePath);
 			break;
 		case LOG_FILE_TYPE_ENDOFFILE:
-			printf(LIGHT_RED"%lld\n", iologfile.hdr.ullSeqNo);
-			printf(LIGHT_RED"DELETE FILE %s\n",iologfile.hdr.wszFilePath);
+			printf(LIGHT_RED"%lld\n", iologfile->hdr.ullSeqNo);
+			printf(LIGHT_RED"DELETE FILE %s\n",iologfile->hdr.wszFilePath);
 			break;
 		case LOG_FILE_TYPE_HARDLINK:
-			printf(BLUE"%lld\n", iologfile.hdr.ullSeqNo);
-			printf(BLUE"CREATE HARDLINK %s > \n",iologfile.hdr.wszFilePath);
+			printf(BLUE"%lld\n", iologfile->hdr.ullSeqNo);
+			printf(BLUE"CREATE HARDLINK %s > %s\n",iologfile->hdr.wszFilePath,iologfile->Data);
 			break;
 		case LOG_FILE_TYPE_MOVEIN:
-			printf(CYAN"%lld\n", iologfile.hdr.ullSeqNo);
-			printf(CYAN"MOVEIN %s > \n",iologfile.hdr.wszFilePath);
+			printf(CYAN"%lld\n", iologfile->hdr.ullSeqNo);
+			printf(CYAN"MOVEIN %s > \n",iologfile->hdr.wszFilePath);
 			break;
 		case LOG_FILE_TYPE_NEWFILE:
-			printf(PURPLE"%lld\n", iologfile.hdr.ullSeqNo);
-			printf(PURPLE"CREATE NEW FILE %s > \n",iologfile.hdr.wszFilePath);
+			printf(PURPLE"%lld\n", iologfile->hdr.ullSeqNo);
+			printf(PURPLE"CREATE NEW FILE %s > \n",iologfile->hdr.wszFilePath);
 			break;
 		case LOG_FILE_TYPE_RENAMEFILE:
-			printf(YELLOW"%lld\n", iologfile.hdr.ullSeqNo);
-			printf(YELLOW"CREATE HARDLINK %s > \n",iologfile.hdr.wszFilePath);
+			printf(YELLOW"%lld\n", iologfile->hdr.ullSeqNo);
+			printf(YELLOW"RENAME %s  > %s \n",iologfile->hdr.wszFilePath,iologfile->Data);
 			break;
 		case LOG_FILE_TYPE_SOFTLINK:
-			printf(BLUE"%lld\n", iologfile.hdr.ullSeqNo);
-			printf(BLUE"CREATE HARDLINK %s > \n",iologfile.hdr.wszFilePath);
+			printf(BLUE"%lld\n", iologfile->hdr.ullSeqNo);
+			printf(BLUE"CREATE SOFTLINK %s > %s\n",iologfile->hdr.wszFilePath, iologfile->Data);
 			break;
 		case LOG_FILE_TYPE_WRITE:
-			printf(GREEN"%lld\n", iologfile.hdr.ullSeqNo);
-			printf(GREEN"Write %s > count %d. offset %lld\n ",iologfile.hdr.wszFilePath,\
-				iologfile.hdr.write.Length,iologfile.hdr.write.ByteOffset);
+			printf(GREEN"%lld\n", iologfile->hdr.ullSeqNo);
+			printf(GREEN"Write %s > count %d. offset %lld\n ",iologfile->hdr.wszFilePath,\
+				iologfile->hdr.write.Length,iologfile->hdr.write.ByteOffset);
 			break;
 		case LOG_FILE_TYPE_STOP_INIT:
-			printf(BROWN"%lld\n", iologfile.hdr.ullSeqNo);
+			printf(BROWN"%lld\n", iologfile->hdr.ullSeqNo);
 			printf(BROWN"******************STOPINIT************************");
 			break;
 	}
@@ -94,7 +94,8 @@ int dump(LOG_FILE iologfile)
 
 int main(int argc, char* argv[])
 {
-	LOG_FILE iologfile = {0};
+	LOG_FILE_HEADER iologfileheader = {0};
+	PLOG_FILE piologfile = NULL;
 	FILE *fp = NULL;
 	char iologpath[1024] = {0};
 	int readlen = 0;
@@ -123,12 +124,23 @@ int main(int argc, char* argv[])
 		while(fp != NULL)
 		{	
 			iolognum++;
-			readlen = fread(&iologfile,sizeof(char),sizeof(LOG_FILE),fp);
-			if(readlen != sizeof(LOG_FILE))
+			readlen = fread(&iologfileheader,sizeof(char),sizeof(LOG_FILE_HEADER),fp);
+			if(readlen != sizeof(LOG_FILE_HEADER))
 				break;
+			piologfile = malloc(iologfileheader.ulLogSize);
+			if(piologfile == NULL)
+				break;
+			memset(piologfile,0,iologfileheader.ulLogSize);
 
-			dump(iologfile);
+			fseek(fp,0,SEEK_SET);
+			readlen = fread(piologfile,sizeof(char),iologfileheader.ulLogSize,fp);
+			if(readlen != iologfileheader.ulLogSize)
+				break;
+			
+			dump(piologfile);
 			fclose(fp);
+			if(piologfile)
+				free(piologfile);
 			
 			memset(iologpath,0,1024);
 			sprintf(iologpath, "%s%d", argv[1],iolognum);
