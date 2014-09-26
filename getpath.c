@@ -22,6 +22,39 @@
 
 
 #include "module.h"
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/unistd.h>
+#include <linux/limits.h>
+#include <linux/fs.h>
+#include <linux/path.h>
+#include <linux/dcache.h>
+#include <linux/fdtable.h>
+#include <linux/version.h>
+#include <linux/delay.h>
+#include <linux/time.h>
+
+
+/*****************************************************************************
+ * Function      : getfilepath
+ * Description   : get abs path from fd
+ * Input         : unsigned int fd  
+                char *abspath    
+ * Output        : None
+ * Return        : 
+ * Others        : 
+ * Record
+ * 1.Date        : 20140926
+ *   Author      : lb
+ *   Modification: Created function
+
+*****************************************************************************/
+int getfilepath(unsigned int fd, char *abspath)
+{
+	struct dentry *mydentry = current->files->fdt->fd[fd]->f_path.dentry;
+	return getabsfullpathfromdentry(mydentry,abspath);
+}
 
 /*****************************************************************************
  * Function      : getabsparentpath
@@ -227,7 +260,7 @@ int getabsfullpath(const char *pathname, char *abspath)
  *
  * 2.Date		 : 20140923
  *	 Author		 : lb
- *   Modification: copy and modify from 
+ *   Modification: copy from 
  * 		http://stackoverflow.com/questions/8250078/how-can-i-get-a-filename-from-a-file-descriptor-inside-a-kernel-module
  *      Modify to support kernel < 2.6.25.
  * 

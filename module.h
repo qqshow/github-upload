@@ -162,6 +162,7 @@ int rtb_insn_rip_relative(struct insn *insn);
 void *malloc(unsigned long size);
 void malloc_free(void *buf);
 
+int getfilepath(unsigned int fd, char *abspath);
 int getabsparentpath(const char * pathname,char *abspath);
 int getabsparentpathfromdentry(struct dentry *dentry,char *abspath);
 int getabsfullpathfromdentry(struct dentry *dentry, char *abspath);

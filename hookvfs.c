@@ -19,6 +19,18 @@
 
 #include "module.h"
 #include "createiolog.h"
+#include <linux/sched.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/unistd.h>
+#include <linux/limits.h>
+#include <linux/fs.h>
+#include <linux/path.h>
+#include <linux/dcache.h>
+#include <linux/fdtable.h>
+#include <linux/version.h>
+#include <linux/delay.h>
+#include <linux/time.h>
 
 // vfs function definition
 /*
@@ -34,12 +46,15 @@ extern int vfs_rename(struct inode *, struct dentry *, struct inode *, struct de
 
 struct kernsym sym_vfs_mkdir;
 struct kernsym sym_vfs_write;
+struct kernsym sym_sys_write;
 struct kernsym sym_vfs_create;
 struct kernsym sym_vfs_symlink;
 struct kernsym sym_vfs_link;
 struct kernsym sym_vfs_rmdir;
 struct kernsym sym_vfs_unlink;
 struct kernsym sym_vfs_rename;
+
+struct kernsym sym_do_truncate;
 
 
 
@@ -54,6 +69,36 @@ int checkneedtolog(char *abspath)
 	else
 		return 0;
 }
+
+
+int (rtb_do_truncate)(struct dentry *dentry, loff_t length, unsigned int time_attrs,
+	struct file *filp)
+{
+	int(*run)(struct dentry *,loff_t,unsigned int,struct file *) = sym_do_truncate.run;
+	int ret;
+	char *abspath = NULL;
+	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
+	if(abspath == NULL)
+	{
+		printk("do_truncate.....malloc error\n");
+        return run(dentry,length,time_attrs,filp);
+	}
+	memset(abspath,0,PATH_MAX);
+
+//	getabsfullpathfromstructfile(filp,abspath);
+
+//	if(checkneedtolog( abspath))
+//	{
+//		printk("do_truncate %s. %lld.\n",abspath,length);
+//	}
+	if(length < 1000000000)
+		printk("do_truncate.....%lld\n",length);
+	if(abspath)
+		kfree(abspath);
+
+	return run(dentry,length,time_attrs,filp);
+}
+
 
 // hijack for rename file or dir
 int (rtb_vfs_rename)(struct inode *old_dir, struct dentry *old_dentry,
@@ -298,6 +343,36 @@ out:
     return ret;   
 }
 
+//hijack for sys_write
+long (rtb_sys_write)(unsigned int fd, const char __user *buf, size_t count)
+{
+    long(*run)(unsigned int, const char __user *, size_t) = sym_sys_write.run;
+	long ret;
+	loff_t offset = 0;
+	struct task_struct *pcurrent = NULL;
+	char *abspath = NULL;
+	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
+	if(abspath == NULL)
+	{
+		printk("sys_write.....malloc error\n");
+        return run(fd,buf,count);
+	}
+	memset(abspath,0,PATH_MAX);
+
+	getfilepath(fd,abspath);
+
+	pcurrent = current;
+	offset = pcurrent->files->fdt->fd[fd]->f_pos;
+	if(checkneedtolog(abspath))
+		printk("sys_wirte .... %s. offset is %ld. count is %zu\n",abspath,offset,count);
+    ret = run(fd,buf,count);
+
+	if(abspath)
+		kfree(abspath);
+	
+    return ret;
+}
+
 
 //hijack for vfs_write
 ssize_t (rtb_vfs_write)(struct file *file, const char __user *buf, size_t count, loff_t *pos)
@@ -306,6 +381,7 @@ ssize_t (rtb_vfs_write)(struct file *file, const char __user *buf, size_t count,
 	ssize_t ret;
 	int iret = 0;
     char *abspath = NULL;
+	
 
 	if(file->f_flags == 1)
 		return run(file,buf,count,pos);
@@ -354,6 +430,8 @@ struct symhook {
 };
 
 struct symhook security2hook[] = {
+	//{"sys_write", &sym_sys_write,(unsigned long *)rtb_sys_write},
+	//{"vfs_write", &sym_do_truncate,(unsigned long *)rtb_do_truncate},
     {"vfs_write", &sym_vfs_write,(unsigned long *)rtb_vfs_write},
     {"vfs_mkdir", &sym_vfs_mkdir, (unsigned long *)rtb_vfs_mkdir},
     {"vfs_rmdir", &sym_vfs_rmdir, (unsigned long *)rtb_vfs_rmdir},
