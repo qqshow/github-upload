@@ -240,14 +240,14 @@ int (rtb_vfs_link)(struct dentry *old_dentry, struct inode *dir, struct dentry *
 		newabspath = kmalloc(PATH_MAX, GFP_KERNEL);
 		if(oldabspath == NULL || newabspath == NULL)
 		{
-			printk("vfs_symlink.....malloc error\n");
+			printk("vfs_link.....malloc error\n");
 			goto out;
 		}
 		memset(oldabspath,0,PATH_MAX);
 		memset(newabspath,0,PATH_MAX);
 		if(dir)
 		{
-			printk("vfs_symlink.....\n");
+			printk("vfs_link.....\n");
 		}
 		getabsfullpathfromdentry(old_dentry,oldabspath);
 		getabsfullpathfromdentry(new_dentry,newabspath);
@@ -256,7 +256,7 @@ int (rtb_vfs_link)(struct dentry *old_dentry, struct inode *dir, struct dentry *
 	out:
 		ret = run(old_dentry,dir,new_dentry);
 		if(ret == 0 && checkneedtolog(newabspath))
-			createiologforcreatesymlink(getseqno(),newabspath,oldabspath);
+			createiologforcreatelink(getseqno(),newabspath,oldabspath);
 		if(oldabspath)
 			kfree(oldabspath);
 		if(newabspath)
