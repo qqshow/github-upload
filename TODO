@@ -1,0 +1,9 @@
+/* add by lb, 2014-09-26 */
+TODE 1. Catch truncate file operation.
+
+TODO 2. Get mount pont's path in getabsfullpath*.
+
+TODO 3. Put create io logs operations in system thread.
+
+TODO 4. Communicate with appnication.
+
