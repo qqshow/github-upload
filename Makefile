@@ -13,7 +13,8 @@ MODULE_SOURCES := \
 	kernfunc.c \
 	hijacks.c \
     fileop.c \
-    createiolog.c
+    createiolog.c \
+    rtbnetlink.c
 
 KBUILD_DIR=$(shell sh ./scripts/find_kernel_src.sh)
 UNAME=$(shell uname -r)
@@ -46,6 +47,7 @@ $(MODULE_NAME)-y := \
 	kernfunc.o \
 	hijacks.o \
     fileop.o \
-    createiolog.o
+    createiolog.o \
+    rtbnetlink.o
 
 endif

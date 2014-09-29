@@ -19,9 +19,13 @@
 
 
 #include "module.h"
+#include "usrlink.h"
+#include "rtbnetlink.h"
 
 
 int sysctl = 1;
+extern struct sock *netlink_fd;
+
 
 module_param(sysctl, int, 0);
 
@@ -49,6 +53,15 @@ int init_rtbackup(void) {
 	//hijack vfs function
 	hijack_syscalls();
 
+	netlink_fd = netlink_kernel_create(&init_net, USER_NETLINK_CMD, 0, netlink_recv_packet, NULL, THIS_MODULE);
+	if(NULL == netlink_fd)
+	{
+		printk(KERN_ALERT "Init netlink failed!\n");
+		return -1;
+	}
+	printk(KERN_ALERT "Init netlink success!\n");
+	
+
 	printk(PKPRE "added to kernel\n");
 
 	return ret;
@@ -72,6 +85,8 @@ static void exit_rtbackup(void) {
 	undo_hijack_syscalls();
 	printk(PKPRE "removed from kernel\n");
 
+	netlink_kernel_release(netlink_fd);
+	printk(KERN_ALERT "Exit netlink!\n");
 	return;
 }
 

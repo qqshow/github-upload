@@ -180,6 +180,7 @@ int symbol_hijack(struct kernsym *sym, const char *symbol_name, unsigned long *c
 
 	sym->new_addr = malloc(sym->size);
 
+
 	if (sym->new_addr == NULL) {
 		printk(PKPRE
 			"Failed to allocate buffer of size %lu for %s\n",

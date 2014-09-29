@@ -432,7 +432,7 @@ struct symhook {
 struct symhook security2hook[] = {
 	//{"sys_write", &sym_sys_write,(unsigned long *)rtb_sys_write},
 	//{"vfs_write", &sym_do_truncate,(unsigned long *)rtb_do_truncate},
-    {"vfs_write", &sym_vfs_write,(unsigned long *)rtb_vfs_write},
+    //{"vfs_write", &sym_vfs_write,(unsigned long *)rtb_vfs_write},
     {"vfs_mkdir", &sym_vfs_mkdir, (unsigned long *)rtb_vfs_mkdir},
     {"vfs_rmdir", &sym_vfs_rmdir, (unsigned long *)rtb_vfs_rmdir},
     {"vfs_rename", &sym_vfs_rename, (unsigned long *)rtb_vfs_rename},
