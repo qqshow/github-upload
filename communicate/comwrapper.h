@@ -51,6 +51,25 @@
     } LARGE_INTEGER;
 #endif
 
+
+typedef enum
+{
+	systeminit,     // init state (only used in kernel module)
+	systemrunning,¡¡//last shutdown state is normal
+	systemshutdown,¡¡// shutdown state ( used in kernel module)
+	systemexceptionreboot//last shutdown state is exception
+}
+enumShutdownState; 
+
+typedef enum
+{
+	modulerunning,
+	moduleerror
+}
+enumModuleRunningState; 
+
+
+
 #define FILEREPL_MAX_PATH 260
 
 
@@ -158,7 +177,7 @@ int InitCommunicate();
  * Description   : Query driver running status.
  * Input          : None
  * Output        : None
- * Return        : 
+ * Return        : 0 for success.
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -173,7 +192,7 @@ int QueryDriverStatus();
  * Description   : Query last shutdown status
  * Input          : None
  * Output        : None
- * Return        : 
+ * Return        : >=0 for success.
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -188,7 +207,8 @@ int QueryLastShutDownStatus();
  * Description   : Reset last shutdown status to normal 
  * Input          : None
  * Output        : None
- * Return        : 
+ * Return        : Success return systemrunning or systemexceptionreboot
+ *                 . -1 for error.
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -203,7 +223,7 @@ int ResetLastShutDownStatus();
  * Description   : Add backup set
  * Input         : REALTIME_BACKUP_DATA * pBackupData  
  * Output        : None
- * Return        : 
+ * Return        : Success return modulerunning or moduleerror. -1 for error.
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -218,7 +238,7 @@ int AddBackupSet (REALTIME_BACKUP_DATA * pBackupData);
  * Description   : Add backup items.
  * Input         : REALTIME_BACKUP_DATA * pBackupData  
  * Output        : None
- * Return        : 
+ * Return        : >= 0 for success
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -233,7 +253,7 @@ int AddBackupItems(REALTIME_BACKUP_DATA * pBackupData);
  * Description   : Delete one backup set
  * Input         : REALTIME_BACKUP_DATA * pBackupData  
  * Output        : None
- * Return        : 
+ * Return        : >= 0 for success
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -248,7 +268,7 @@ int DelBackupSet(REALTIME_BACKUP_DATA * pBackupData);
  * Description   : Delete backup items
  * Input         : REALTIME_BACKUP_DATA * pBackupData  
  * Output        : None
- * Return        : 
+ * Return        : >= 0 for success
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -263,7 +283,7 @@ int DelBackupItems(REALTIME_BACKUP_DATA * pBackupData);
  * Description   : Delete all backup sets
  * Input          : None
  * Output        : None
- * Return        : 
+ * Return        : >= 0 for success
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -278,7 +298,7 @@ int DelAllBackup();
  * Description   : Uninitalize communicate socket.
  * Input          : None
  * Output        : None
- * Return        : 
+ * Return        : >= 0 for success
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -295,7 +315,7 @@ int UnInitCommunicate();
  * Input         : int (*callback)(int  
                 int)      First para: notify type. Second Para:notify status.     
  * Output        : None
- * Return        : 
+ * Return        : >= 0 for success
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -312,7 +332,7 @@ void RegisterUserAppNotify(int (*callback)(int,int));
  * Input         : REALTIME_BACKUP_DATA *pBackupData  
                 ULONG ulType                       
  * Output        : None
- * Return        : 
+ * Return        : >= 0 for success
  * Others        : 
  * Record
  * 1.Date        : 20140929

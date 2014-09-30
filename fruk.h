@@ -173,7 +173,7 @@ typedef struct _FILEREPL_REPLY
 #define LOG_FILE_TYPE_DELETEFILE    5  // и╬ЁЩнд╪Ч
 #define LOG_FILE_TYPE_RENAMEFILE    6  // нд╪Ч╦дцШ
 #define LOG_FILE_TYPE_MOVEIN        7  //╪Ю©ьмБ╣╫╪Ю©ьдз
-#define LOG_FILE_TYPE_HARDLINK      8  // ╢╢╫╗хс╡а╢╫с
+#define LOG_FILE_TYPE_HARDLINK      8  // ╢╢╫╗с╡а╢╫с
 #define LOG_FILE_TYPE_SOFTLINK	    9  // ╢╢╫╗хМа╢╫с
 
 //
