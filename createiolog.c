@@ -132,6 +132,7 @@ int createiologforcreatefile(ulonglong ullSeqNo, char *abspath,int mode)
 
 }
 
+
 int createiologforrmdir(ulonglong ullSeqNo, char *abspath)
 {
 		int iret = -1;

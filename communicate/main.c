@@ -58,12 +58,30 @@ int main(int argc, char **argv)
 
 	ret = InitCommunicate();
 
-	while(1)
-	{
-		sleep(1);
+	replnotify.Type = NOTIFY_TYPE_ADDSET;
+	
 
-		ret = AddBackupItems(&replnotify.AddOrDel.BackupData);
-	}
+	ret = AddBackupSet(&replnotify.AddOrDel.BackupData);
+
+	sleep(5);
+
+	ret = AddBackupSet(&replnotify.AddOrDel.BackupData);
+
+	sleep(5);
+
+
+	replnotify.Type = NOTIFY_TYPE_ADDITEM;
+
+	ret = AddBackupItems(&replnotify.AddOrDel.BackupData);
+
+	sleep(5);
+
+
+	ret = AddBackupItems(&replnotify.AddOrDel.BackupData);
+	sleep(5);
+
+	
+	
 	ret = UnInitCommunicate();
 
 

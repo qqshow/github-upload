@@ -31,7 +31,7 @@
 
 
 void netlink_to_user(int dest, void *buf, int len);
-int process_rtb_get(int dest, void *buf, int len);
+int process_netlink_cmd(int dest, void *buf, int len);
 int process_rtb_set(int dest, void *buf, int len);
 void netlink_process_packet(struct nlmsghdr *nl);
 void netlink_recv_packet(struct sk_buff *__skb);

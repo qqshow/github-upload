@@ -54,9 +54,9 @@
 
 typedef enum
 {
-	systeminit,     // init state (only used in kernel module)
-	systemrunning,¡¡//last shutdown state is normal
-	systemshutdown,¡¡// shutdown state ( used in kernel module)
+	systeminit,// init state (only used in kernel module)
+	systemrunning,//last shutdown state is normal
+	systemshutdown,// shutdown state ( used in kernel module)
 	systemexceptionreboot//last shutdown state is exception
 }
 enumShutdownState; 

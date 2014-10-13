@@ -8,14 +8,15 @@ ifeq ($(KERNELRELEASE),)
 MODULE_SOURCES := \
     module.c \
     getpath.c \
+    monitorset.c \
 	hookvfs.c \
 	symbols.c \
 	kernfunc.c \
 	hijacks.c \
     fileop.c \
     createiolog.c \
-    rtbnetlink.c
-
+    rtbnetlink.c \
+    rb.c
 KBUILD_DIR=$(shell sh ./scripts/find_kernel_src.sh)
 UNAME=$(shell uname -r)
 PWD := $(shell pwd)
@@ -42,12 +43,13 @@ obj-m := $(MODULE_NAME).o
 $(MODULE_NAME)-y := \
 	module.o \
     getpath.o \
+        monitorset.o \
 	hookvfs.o \
 	symbols.o \
 	kernfunc.o \
 	hijacks.o \
     fileop.o \
     createiolog.o \
-    rtbnetlink.o
-
+    rtbnetlink.o \
+    rb.o
 endif

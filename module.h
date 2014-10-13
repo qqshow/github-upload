@@ -37,6 +37,8 @@
 #include <linux/namei.h>
 #include <linux/fs_struct.h>
 #include <linux/mount.h>
+#include <linux/slab.h>
+#include <linux/rbtree.h>
 
 
 #include <asm/uaccess.h>
@@ -131,6 +133,9 @@ struct kernsym {
 	bool hijacked;
 	void *run;
 };
+
+
+
 
 extern struct kernsym sym_vfs_mkdir;
 extern struct kernsym sym_vfs_write;

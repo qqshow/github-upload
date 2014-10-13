@@ -20,6 +20,7 @@
 
 #include "usrlink.h"
 #include "rtbnetlink.h"
+#include "monitorset.h"
 
 struct sock *netlink_fd;
 
@@ -49,24 +50,85 @@ void netlink_to_user(int dest, void *buf, int len)
 	printk(KERN_ALERT "K send packet success\n");
 }
 
-int process_hello_get(int dest, void *buf, int len)
+int process_netlink_cmd(int dest, void *buf, int len)
 {
+	int ret = NET_OK;
 	PFILEREPL_NOTIFICATION preplnotify = (PFILEREPL_NOTIFICATION )buf;
 	printk(KERN_ALERT "In process_hello get!\n");
 
+	if(buf == NULL || len < sizeof(FILEREPL_NOTIFICATION))
+		return NET_PARAM;
 	printk("Type:%d. Running status %d. CacheDir %s.\n",preplnotify->Type,preplnotify->bNormalRunning,\
 		preplnotify->AddOrDel.BackupData.wszBakCacheDir);
-	preplnotify->bNormalRunning = 1;
-	netlink_to_user(dest, buf, sizeof(FILEREPL_NOTIFICATION));
-	//memcpy(buf, "I known you !", 13);
-	//netlink_to_user(dest, buf, 13);
-	return NET_OK;
+
+	switch(preplnotify->Type)
+	{
+		case NOTIFY_TYPE_ADDSET:
+			printk("NOTIFY_TYPE_ADDSET\n");
+			ret = ConfigAddMonitorSet(preplnotify,true);
+			if(ret != 0)
+			{
+				printk("ConfigAddMonitorSet error.\n");
+			}
+			break;
+		case NOTIFY_TYPE_ADDITEM:
+			printk("NOTIFY_TYPE_ADDITEM\n");
+			ret = ConfigAddMonitorSet(preplnotify,false);
+			if(ret != 0)
+			{
+				printk("ConfigAddMonitorSet error.\n");
+			}
+			break;
+		case NOTIFY_TYPE_DELSET:
+			printk("NOTIFY_TYPE_DELSET\n");
+			ret = ConfigDelMonitorSet(preplnotify);
+			if(ret != 0)
+			{
+				printk("ConfigDelMonitorSet error\n");
+			}
+			break;
+		case NOTIFY_TYPE_DELITEM:
+			printk("NOTIFY_TYPE_DELITEM\n");
+			ret = ConfigDelMonitorItem(preplnotify);
+			if(ret != 0)
+			{
+				printk("ConfigDelMonitorItem error\n");
+			}
+			break;
+		case NOTIFY_TYPE_DELALL:
+			printk("NOTIFY_TYPE_DELALL\n");
+			ret = ConfigDelAllMonitorSet();
+			if(ret != 0)
+			{
+				printk("ConfigDelAllMonitorSet error\n");
+			}
+			break;
+		case NOTIFY_TYPE_QUERY_RUNNING_STATUS:
+			printk("NOTIFY_TYPE_ADDSET\n");
+
+			break;
+		case NOTIFY_TYPE_QUERY_LAST_SHUTDOWN_STATUS:
+			printk("NOTIFY_TYPE_QUERY_LAST_SHUTDOWN_STATUS\n");
+
+			break;
+		case NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS:
+			printk("NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS\n");
+			FileReplData.Config.dwLastNormalShutdown = 1;
+			break;
+		default:
+			break;
+	}
+
+
+	//preplnotify->bNormalRunning = 1;
+	//netlink_to_user(dest, buf, sizeof(FILEREPL_NOTIFICATION));
+	return ret;
 }
 
 int process_hello_set(int dest, void *buf, int len)
 {
 	printk(KERN_ALERT "In process_hello set! %s\n", (char *)buf);
-	memcpy(buf, "S known you !", 13);
+	memcpy(buf, "test !", 13);
 	netlink_to_user(dest, buf, 13);
 	return NET_OK;
 }
@@ -79,7 +141,7 @@ void netlink_process_packet(struct nlmsghdr *nl)
 	switch(nl->nlmsg_type)
 	{
 	case RTB_GET:
-		ret = process_hello_get(nl->nlmsg_pid, NLMSG_DATA(nl), nl->nlmsg_len);
+		ret = process_netlink_cmd(nl->nlmsg_pid, NLMSG_DATA(nl), nl->nlmsg_len);
 		break;
 	case RTB_SET:
 		ret = process_hello_set(nl->nlmsg_pid, NLMSG_DATA(nl), nl->nlmsg_len);

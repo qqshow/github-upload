@@ -21,10 +21,17 @@
 #include "module.h"
 #include "usrlink.h"
 #include "rtbnetlink.h"
-
+#include "fruk.h"
+#include "rb.h"
+#include "monitorset.h"
 
 int sysctl = 1;
 extern struct sock *netlink_fd;
+FILEREPL_DATA FileReplData;
+
+
+
+
 
 
 module_param(sysctl, int, 0);
@@ -45,6 +52,7 @@ module_param(sysctl, int, 0);
 int init_rtbackup(void) {
 
 	int ret;
+
 	// get some kernel function address
 	ret = kernfunc_init();
 
@@ -60,10 +68,14 @@ int init_rtbackup(void) {
 		return -1;
 	}
 	printk(KERN_ALERT "Init netlink success!\n");
+
+	ret = InitMonitorSet();
+	if (IN_ERR(ret))
+	{
+		printk("initmonitorset error.\n");
+		return ret;
+	}	
 	
-
-	printk(PKPRE "added to kernel\n");
-
 	return ret;
 }
 
@@ -82,10 +94,14 @@ int init_rtbackup(void) {
 *****************************************************************************/
 static void exit_rtbackup(void) {
 	//restore vfs function
+	int ret = 0;
 	undo_hijack_syscalls();
 	printk(PKPRE "removed from kernel\n");
 
+	
 	netlink_kernel_release(netlink_fd);
+
+	UninitMonitorSet();
 	printk(KERN_ALERT "Exit netlink!\n");
 	return;
 }

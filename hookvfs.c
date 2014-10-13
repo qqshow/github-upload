@@ -63,8 +63,6 @@ int checkneedtolog(char *abspath)
 {
 
 	if(strncmp(abspath,"/test/",strlen("/test/")) == 0 )
-//	if(strncmp(abspath,"/iologs/",strlen("/iologs/")) != 0 && strncmp(abspath,"/dev/",strlen("/dev/")) != 0\
-//		&& strncmp(abspath,"/var/log/",strlen("/var/log/")) != 0)
 		return 1;
 	else
 		return 0;
@@ -190,7 +188,7 @@ int (rtb_vfs_rmdir)(struct inode *dir, struct dentry *dentry)
     getabsfullpathfromdentry(dentry,abspath);
 	printk("vfs_rmdir %s.\n",abspath);
     ret = run(dir,dentry);
-	printk("vfs_rmdir return %d.\n",abspath);
+	printk("vfs_rmdir return %d.\n",ret);
 	if(ret == 0 && checkneedtolog(abspath))
 		createiologforrmdir(getseqno(), abspath);
 	if(abspath)
@@ -402,7 +400,6 @@ ssize_t (rtb_vfs_write)(struct file *file, const char __user *buf, size_t count,
 			)
 		{
 			printk("vfs_write file %s. count is %zu, offset is %lld. f_flags %d\n",abspath,count,*pos,file->f_flags);
-			printk("%x\n",run);
     }
 
 	if(checkneedtolog(abspath))

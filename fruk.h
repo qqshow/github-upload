@@ -40,6 +40,9 @@ Environment:
 #ifndef _FILEREPLUK_H
 #define _FILEREPLUK_H
 
+#include <linux/list.h>
+#include <linux/rbtree.h>
+#include "module.h"
 
 
 #pragma pack(1)
@@ -62,94 +65,14 @@ Environment:
 #define MIN_SECTOR_SIZE         	512
 #define FILEREPL_READ_BUFFER_SIZE   1024*8      //不能小于1024*8
 #define FILEREPL_MAX_PATH       	MAX_PATH
-
+#define BOOL int
 #define ALIGN_SIZE(s,a) \
             (s) += (a) - 1;\
             (s) /= (a);\
             (s) *= (a);
 
-//
-// Notification messages
-//
-
-#define NOTIFY_TYPE_USER_TO_DRV_START       0x4000
-// #define NOTIFY_TYPE_SETFILTERFILE	    1+NOTIFY_TYPE_USER_TO_DRV_START
-//#define NOTIFY_TYPE_ADD_BACKUP_FILE	        2+NOTIFY_TYPE_USER_TO_DRV_START
-//#define NOTIFY_TYPE_STOP_INIT_FILE	        3+NOTIFY_TYPE_USER_TO_DRV_START
-//#define NOTIFY_TYPE_STOP_BACKUP_FILE	    4+NOTIFY_TYPE_USER_TO_DRV_START
-#define NOTIFY_TYPE_QUERY_RUNNING_STATUS    5+NOTIFY_TYPE_USER_TO_DRV_START
-
-//
-// 添加备份集，如果已经存在相同GUID的备份集配置，则会删除
-//
-#define NOTIFY_TYPE_ADDSET                  6+NOTIFY_TYPE_USER_TO_DRV_START
-
-// 
-// 添加备份项，如果已经存在相同GUID的备份集配置，不会删除
-//
-#define NOTIFY_TYPE_ADDITEM         	    7+NOTIFY_TYPE_USER_TO_DRV_START
-
-//
-// 删除备份集，包括备份集下的文件项和目录项
-//
-#define NOTIFY_TYPE_DELSET                  8+NOTIFY_TYPE_USER_TO_DRV_START
-
-//
-// 删除文件项和目录项配置
-//
-#define NOTIFY_TYPE_DELITEM         	    9+NOTIFY_TYPE_USER_TO_DRV_START
-
-//
-// 删除所有备份集设置
-//
-#define NOTIFY_TYPE_DELALL           	    10+NOTIFY_TYPE_USER_TO_DRV_START
-
-//
-// 查询上次关机状态
-//
-#define NOTIFY_TYPE_QUERY_LAST_SHUTDOWN_STATUS 11+NOTIFY_TYPE_USER_TO_DRV_START
-
-//
-// 重置上次关机状态
-//
-#define NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS 12+NOTIFY_TYPE_USER_TO_DRV_START
 
 
-#define FILTER_TYPE_INVALID     0
-#define FILTER_TYPE_FILE        1
-#define FILTER_TYPE_DIR         2
-#define FILTER_TYPE_SET         3
-
-
-typedef struct _FILTER_ITEM_
-{
-    ULONG   ulFileType;   //0文件；1 目录； 
-    WCHAR   wszFilterName[FILEREPL_MAX_PATH];
-}FILTER_ITEM,  *PFILTER_ITEM;
-
-typedef struct _REALTIME_BACKUP_DATA_
-{
-    ULONG   ulSize;                     //数据的总长度
-    GUID    guidSetId;                  //一个备份集的ID（实例也可认为是一个集合）
-    ULONG   ulFilterItemCounts;         //监控项总数
-    WCHAR   wszBakCacheDir[FILEREPL_MAX_PATH];  //备份日志文件存放目录
-    FILTER_ITEM FilterItems[1];  
-}REALTIME_BACKUP_DATA;
-
-typedef struct _FILEREPL_NOTIFICATION {
-
-	ULONG Type;             // for quad-word alignement of the Contents structure
-	ULONG bNormalRunning;   // driver's running status
-	union
-	{
-        struct  
-        {
-            REALTIME_BACKUP_DATA     BackupData;
-
-        } AddOrDel;
-	};
-    
-} FILEREPL_NOTIFICATION, *PFILEREPL_NOTIFICATION;
 
 #define RET_SUCCESS         	0
 #define RET_UNKONOW_NOTIFY_TYPE	0xF0000001
@@ -221,6 +144,171 @@ typedef struct _LOG_FILE_
     ULONG       Data[1];        //附加数据,比如改名的信息...  
 
 } LOG_FILE, *PLOG_FILE;
+
+
+
+
+
+
+
+
+//
+// 不管是文件、目录或是备份集的配置项，都有着相同的头结构
+//
+typedef struct _MONITOR_ENTRY_HEAD_
+{
+    struct rb_node  rbnode;
+    GUID        guidSetId;          // 备份集实例唯一标识
+}MONITOR_ENTRY_HEAD,*PMONITOR_ENTRY_HEAD;
+
+//
+// 一个备份集有唯一GUID标识，有唯一备份io日志保存目录
+//
+typedef struct _MONITOR_SET_ENTRY_
+{
+	MONITOR_ENTRY_HEAD  hdr;          //必须是第一个成员
+
+    char       wcsSetCacheDir[FILEREPL_MAX_PATH];  // 文件缓存日志目录，必须以NULL结尾 \??\C:\BAKDIR\C\DIR\CACHE
+	ULONGLONG   ullSetSeqNo;        // 备份集的IO日志文件顺序号
+	ULONG       ulFileCount;        // 该备份集下文件个数
+
+} MONITOR_SET_ENTRY, *PMONITOR_SET_ENTRY;
+
+
+
+//过滤项数据定义
+typedef struct _MONITOR_FILE_ENTRY_
+{
+    MONITOR_ENTRY_HEAD  hdr;          //必须是第一个成员
+
+    BOOL            bInited;
+    BOOL            bMonitor;
+    ULONGLONG       ullSeqNo;
+	
+	///////////////////////////////////////////////
+	//过滤项是否目录[区分文件或者目录两种类型]
+    BOOL            bDirectory;     
+	ULONG           ulLength; //该过滤项长度
+    ///////////////////////////////////////////////
+
+	char	        wcsMonitorFile[FILEREPL_MAX_PATH];  //必须以NULL结尾    C:\DIR\FILE.EXT
+    MONITOR_SET_ENTRY  *pSetEntry;      // 备份集数据指针，为了访问快捷，该值需要初始化，不能从保存的配置数据读取
+
+} MONITOR_FILE_ENTRY, *PMONITOR_FILE_ENTRY;
+
+//搜索、配置查找项数据定义，配置队列和搜索树存储相同的数据结构指针
+typedef struct _MONITOR_ITEM_DATA_
+{
+	struct list_head              listHead;
+	ULONG                   ulCounts;  // 包含的子项总数
+	struct kmem_cache *  ItemLookAsideList; //配置数据队列
+	struct rb_root           RBTree;           //搜索树
+    ULONG                   ulSize;     // 结构的大小
+} MONITOR_ITEM_DATA, *PMONITOR_ITEM_DATA;
+
+
+//备份集、文件[目录]过滤搜索、配置数据使用相同的结构
+typedef MONITOR_ITEM_DATA MONITOR_SET_DATA,*PMONITOR_SET_DATA;
+typedef MONITOR_ITEM_DATA MONITOR_FILE_DATA,*PMONITOR_FILE_DATA;
+
+typedef struct _FILEREPL_CONFIG
+{
+    BOOL                    bMonitorFilesLoaded;
+    WCHAR	                wcsConfigDir[FILEREPL_MAX_PATH];  // 配置文件存放目录
+    MONITOR_FILE_DATA       MonitorFiles;       //文件
+
+	/////////////////////////////////////////////////////////////
+	//过滤项全部放在MonitorFiles中，不区分文件和目录
+    //MONITOR_FILE_DATA       MonitorDirs;        //目录
+    /////////////////////////////////////////////////////////////
+
+	MONITOR_SET_DATA        MonitorSet;         //备份集
+    //NPAGED_LOOKASIDE_LIST   RBTreeLookAsideList;
+
+    //ERESOURCE	            SyncResource;
+    BOOL                    bValid;             // 标志该驱动是否监控
+    BOOL                    bNormalRunning;     // 标志该驱动是否正常运行
+	ULONG					dwLastNormalShutdown; //标志系统上次关机状态
+
+    BOOL                    bDirty;             //用于定时保存配置数据时判断配置数据是否改变
+    
+} FILEREPL_CONFIG, *PFILEREPL_CONFIG;
+
+//
+// 配置文件的文件头，大小不能超过FILEREPL_READ_BUFFER_SIZE
+// #define FILEREPL_READ_BUFFER_SIZE   1024*8
+//
+#define DEFAULT_CONFIG_FILE_HEADER_SIZE FILEREPL_READ_BUFFER_SIZE
+typedef struct _CONFIG_FILE_HEADER_
+{
+    ULONG       ulHeaderSize;       //配置文件头的大小，固定为FILEREPL_READ_BUFFER_SIZE
+
+    ULONG       ulOffsetSet;        //备份集在配置文件中的偏移
+    ULONG       ulSizeSet;          //备份集在配置文件中的大小
+
+    ULONG       ulOffsetFiles;        //文件项在配置文件中的偏移
+    ULONG       ulSizeFiles;          //文件项在配置文件中的大小
+
+	ULONG		ulLastShutdownStatus; //系统上次关机状态
+
+//////////////////////////////////////////////////////////////////////////
+    //ULONG       ulOffsetDirs;        //目录项在配置文件中的偏移
+    //ULONG       ulSizeDirs;          //目录项在配置文件中的大小
+//////////////////////////////////////////////////////////////////////////
+
+}CONFIG_FILE_HEADER,*PCONFIG_FILE_HEADER;
+
+
+typedef struct _FILEREPL_DATA {
+
+
+	FILEREPL_CONFIG	Config;
+
+
+    ULONG           ulConfigRefreshFlag;  // 如果配置更新了，则该值+1
+
+
+    BOOL            bStopTask;
+    BOOL            bTaskStoped;
+
+    BOOL            bInsertTasking;
+
+	BOOL			bInsertWriteTasking;
+
+	BOOL			bWaittingTask;
+	BOOL			bWaittingWriteTask;
+
+
+	long			MaxIoToWrite;
+	ULONG			WriteBuffLen;
+	long			WriteIoCached;
+	long			WriteIoAsynchronous;
+	long			WriteIo;
+	long			nneedtosavemonitor;
+	ULONG			dbgprintlevel;
+	ULONGLONG		ullIoBuffSize;           //
+	ULONGLONG		ullIoCounts;
+} FILEREPL_DATA, *PFILEREPL_DATA;
+
+extern FILEREPL_DATA FileReplData;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #pragma pack()
 
