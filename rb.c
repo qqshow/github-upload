@@ -86,9 +86,11 @@ MONITOR_FILE_ENTRY * mi_search(struct rb_root *root, char * pathname)
 	int result;
 	MONITOR_FILE_ENTRY *data = NULL;
   	while (node) {
+		printk("RTB: mi_search 1\n");
   		data = container_of(node, MONITOR_FILE_ENTRY, hdr.rbnode);
 		//result = memcmp(guid,data->hdr.guidSetId,sizeof(GUID));
 		result = strncmp(pathname,data->wcsMonitorFile,strlen(data->wcsMonitorFile));
+		printk("RTB: mi_search 2 pathname %s, monitorfile %s.\n",pathname,data->wcsMonitorFile);
 		if (result < 0)
   			node = node->rb_left;
 		else if (result > 0)

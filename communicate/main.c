@@ -45,6 +45,7 @@ int main(int argc, char **argv)
 {
 	int ret, type, slen = 0, rlen = 0;
 	FILEREPL_NOTIFICATION replnotify = {0};
+	FILEREPL_NOTIFICATION * preplnotify = NULL;
 	replnotify.Type = NOTIFY_TYPE_ADDITEM;
 	strncpy(replnotify.AddOrDel.BackupData.wszBakCacheDir,"/test/",6);
 	replnotify.AddOrDel.BackupData.ulSize = sizeof(REALTIME_BACKUP_DATA);
@@ -58,7 +59,9 @@ int main(int argc, char **argv)
 
 	ret = InitCommunicate();
 
+	// add backup set
 	replnotify.Type = NOTIFY_TYPE_ADDSET;
+	replnotify.AddOrDel.BackupData.guidSetId.Data1 =1;
 	
 
 	ret = AddBackupSet(&replnotify.AddOrDel.BackupData);
@@ -69,36 +72,41 @@ int main(int argc, char **argv)
 
 	sleep(5);
 
-
-	replnotify.Type = NOTIFY_TYPE_ADDITEM;
-
-	ret = AddBackupItems(&replnotify.AddOrDel.BackupData);
-
-	sleep(5);
-
-
-	ret = AddBackupItems(&replnotify.AddOrDel.BackupData);
-	sleep(5);
-
+	//add backup item
+	int filerepllen = sizeof(FILEREPL_NOTIFICATION) + sizeof(FILTER_ITEM);
+	preplnotify = malloc(filerepllen);
+	memset(preplnotify,0,filerepllen);
 	
+	preplnotify->Type = NOTIFY_TYPE_ADDITEM;
+	preplnotify->AddOrDel.BackupData.guidSetId.Data1 = 2;
+	preplnotify->AddOrDel.BackupData.ulFilterItemCounts = 2;
+	strncpy(preplnotify->AddOrDel.BackupData.wszBakCacheDir,"/test/",6);
+	preplnotify->AddOrDel.BackupData.ulSize = sizeof(REALTIME_BACKUP_DATA) + sizeof(FILTER_ITEM);
+	preplnotify->AddOrDel.BackupData.FilterItems[0].ulFileType = FILTER_TYPE_FILE;
+	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[0].wszFilterName,"/bbbbb/",strlen("/bbbbb/"));
+	preplnotify->AddOrDel.BackupData.FilterItems[1].ulFileType = FILTER_TYPE_FILE;
+	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[1].wszFilterName,"/cccccccccc/",strlen("/ccccccccc/"));
+	
+	ret = AddBackupItems(&preplnotify->AddOrDel.BackupData);
+
+	sleep(5);
+
+
+	ret = AddBackupItems(&preplnotify->AddOrDel.BackupData);
+	sleep(5);
+
+	//delete backup item
+//	preplnotify->Type = NOTIFY_TYPE_DELITEM;
+//	ret = DelBackupItems(&preplnotify->AddOrDel.BackupData);
+	
+	
+	//delete all backup set
+	replnotify.Type = NOTIFY_TYPE_DELALL;
+	ret = DelAllBackup(&replnotify.AddOrDel.BackupData);
 	
 	ret = UnInitCommunicate();
 
 
-/*
-	ret = netlink_send(&h_sock, type, &replnotify, sizeof(FILEREPL_NOTIFICATION), &replnotify, &rlen);
-	if(NET_OK != parse_ret(ret))
-		goto exit_p;
-
-	if(rlen > 0)
-	{
-//		rbuf[rlen] = '\0';
-//		printf("K rep [len = %d]:%s\n", rlen, rbuf);
-		printf("rep [len = %d]: Type is %d. Running statu is %d. CacheDir is %s.\n",rlen,replnotify.Type,replnotify.bNormalRunning,\
-		replnotify.AddOrDel.BackupData.wszBakCacheDir);
-	}
-*/
-	//printf("K[len = %d]: %s\n", rlen, rbuf);
 
 exit_p:
 	return 0;

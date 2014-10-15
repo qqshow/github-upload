@@ -138,22 +138,25 @@ int DelAllBackup()
 
 int SendConfig(REALTIME_BACKUP_DATA *pBackupData, ULONG ulType)
 {
-	FILEREPL_NOTIFICATION *pFN = NULL;
+	PFILEREPL_NOTIFICATION pFN = NULL;
 	int ulFnSize = 0;
 	int ret = 0;
-	if(pBackupData == NULL)
-	{
-		return -1;
-	}
 
 	if(p_sock == NULL)
 	{
 		printf("netlink sock is not initalized.\n");
 		return -2;
 	}
-
-	ulFnSize = pBackupData->ulSize+sizeof(FILEREPL_NOTIFICATION)-sizeof(REALTIME_BACKUP_DATA);
-
+	
+	if(pBackupData)
+	{
+		ulFnSize = pBackupData->ulSize+sizeof(FILEREPL_NOTIFICATION)-sizeof(REALTIME_BACKUP_DATA);
+	}
+	else
+	{
+		ulFnSize = sizeof(FILEREPL_NOTIFICATION);
+	}
+	
 	pFN=(FILEREPL_NOTIFICATION*)malloc(ulFnSize);
 	if(pFN == NULL)
 	{
@@ -162,8 +165,11 @@ int SendConfig(REALTIME_BACKUP_DATA *pBackupData, ULONG ulType)
 	}
 	pFN->Type = ulType;
 
-	memcpy((char *)&(pFN->AddOrDel.BackupData),(char *)pBackupData,pBackupData->ulSize);
-	printf("cache dir is %s. ulsize is %d\n,%d.",pFN->AddOrDel.BackupData.wszBakCacheDir,pBackupData->ulSize,sizeof(REALTIME_BACKUP_DATA));
+	if(pBackupData)
+	{
+		memcpy((char *)&(pFN->AddOrDel.BackupData),(char *)pBackupData,pBackupData->ulSize);
+		printf("cache dir is %s. ulsize is %d\n,%d.",pFN->AddOrDel.BackupData.wszBakCacheDir,pBackupData->ulSize,sizeof(REALTIME_BACKUP_DATA));
+	}
 	ret = netlink_send(p_sock,RTB_CMD,(char *)pFN,ulFnSize);
 
 	if(pFN)

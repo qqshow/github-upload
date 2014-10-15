@@ -137,7 +137,7 @@ int DumpAllMonitorSet()
 		 pmfe = rb_entry(node, MONITOR_FILE_ENTRY, hdr.rbnode);
 		 if(pmfe != NULL)
 		 {
-			printk( "UnitMonitorFiles, %s, ullSeqNo = %I64u, bMonitor = 0x%x, bInited = 0x%x", 
+			printk( "UnitMonitorFiles, %s, ullSeqNo = %lld, bMonitor = 0x%x, bInited = 0x%x", 
             pmfe->wcsMonitorFile, 
             pmfe->ullSeqNo,
             pmfe->bMonitor,
@@ -176,15 +176,10 @@ int DumpAllMonitorSet()
  
 	 for(ulI=0;ulI<pBackupData->ulFilterItemCounts;ulI++,pItem++)
 	 {
+	 	 memset(&mfe,0,sizeof(MONITOR_FILE_ENTRY));
 		 memcpy(&mfe.hdr.guidSetId,&pBackupData->guidSetId,sizeof(GUID));
-		 status = strncpy(mfe.wcsMonitorFile,pItem->wszFilterName,strlen(mfe.wcsMonitorFile));
-		 if (0 != (status))
-		 {
-			 //NotifyClientDriverError(status);
-			 //WriteEvent(FileReplData.DriverObject, status, L"ConfigDelMonitorItem.RtlStringCbCopyW2");
-			 printk("ConfigDelMonitorItem.RtlStringCbCopyW2 error.");
-			 return status;
-		 }
+		 strncpy(mfe.wcsMonitorFile,pItem->wszFilterName,strlen(pItem->wszFilterName));
+		 printk("RTB: ConfigDelMonitorItem count %d. %s\n",pBackupData->ulFilterItemCounts,pItem->wszFilterName);
  
  /////////////////////////////////////////////////////////////////////////////////////////
 		 pMonitorItems = &FileReplData.Config.MonitorFiles;
@@ -203,19 +198,13 @@ int DumpAllMonitorSet()
 			 printk("AddMonitorItems error.unknown type=%ld.",pItem->ulFileType);
 			 continue;
 		 }
+		 printk("RTB: DelMonitorItem %s.\n",mfe.wcsMonitorFile);
  ///////////////////////////////////////////////////////////////////////////////////////
  		 pmfeFound = (PMONITOR_FILE_ENTRY)mi_remove(&pMonitorItems->RBTree,mfe.wcsMonitorFile);
 		 if(pmfeFound != NULL)
 		 {
+		 	 printk("RTB: Found\n");
 			 EntryFree(pMonitorItems->ItemLookAsideList,pmfeFound);
-		 }
- 
-		 if (0 != (status))
-		 {
-			 //NotifyClientDriverError(status);
-			 //WriteEvent(FileReplData.DriverObject, status, L"ConfigDelMonitorItem.AddMonitorFile or AddMonitorDir error");
-			 printk("ConfigDelMonitorItem.AddMonitorFile or AddMonitorDir error.ulFileType=%d",pItem->ulFileType);
-			 return status;
 		 }
 	 }
  
@@ -268,11 +257,12 @@ int DumpAllMonitorSet()
 		printk("AddMonitorItem.STATUS_INVALID_PARAMETER pmfe->wcsMonitorFile = %s", pmfe->wcsMonitorFile);
 		return -1;
 	}
-
-
+	printk("RTB: AddmonitorItem %s.\n",pmfe->wcsMonitorFile);
+	
 		//WaitWriteForMonitor();
 
 			pmfeFound = (PMONITOR_FILE_ENTRY)mi_search(&pMonitorData->RBTree,pmfe->wcsMonitorFile);
+		
 			if(pmfeFound == NULL)
 			{
 				pmfeNew = MonitorFileEntryAlloc();
@@ -285,9 +275,11 @@ int DumpAllMonitorSet()
 
 
 				memcpy(pmfeNew, pmfe, sizeof(MONITOR_FILE_ENTRY));
-
+				printk("RTB: test1.....\n");
 				status = mi_insert(&pMonitorData->RBTree,pmfeNew);
 
+				printk("RTB status is %d.\n",status);
+				
 				if( status != 0)
 				{
 					MonitorFileEntryFree(pmfeNew);
@@ -299,8 +291,8 @@ int DumpAllMonitorSet()
 				else
 				{	
 					// Ìí¼Ó³É¹¦
-                    pmfeFound->bMonitor= true;
-                    pmfeFound->pSetEntry = NULL;
+                    pmfeNew->bMonitor= true;
+                    pmfeNew->pSetEntry = NULL;
 					pMonitorData->ulCounts++;
                     printk("AddMonitorItem. pmfe->wcsMonitorFile = %s", pmfeNew->wcsMonitorFile);
 				}
@@ -386,6 +378,7 @@ int ConfigAddMonitorSet(PFILEREPL_NOTIFICATION pfn,
     FILTER_ITEM *pItem;
     MONITOR_SET_ENTRY   mse;
     MONITOR_FILE_ENTRY  mfe;
+	PMONITOR_SET_ENTRY pmse = NULL;
 	printk("ConfigAddMonitorSet bDelExisSet %d.\n");
     if(pfn == NULL)
     {
@@ -417,20 +410,19 @@ int ConfigAddMonitorSet(PFILEREPL_NOTIFICATION pfn,
             return status;
         }
     }
-
+	pmse = ms_search(&FileReplData.Config.MonitorSet.RBTree,mse.hdr.guidSetId);
+	if(pmse == NULL)
+	{
+		printk("RTB: ConfigAddMonitorSet search error \n");
+		return -3;
+	}
     pItem = pBackupData->FilterItems;
     for(ulI = 0; ulI<pBackupData->ulFilterItemCounts; ulI++,pItem++)
     {
+    	printk("RTB: Filter num %d,count is %d. filter name is %s.\n",ulI,pBackupData->ulFilterItemCounts,pItem->wszFilterName);
 		memset(&mfe,0,sizeof(mfe));
 		memcpy(&mfe.hdr.guidSetId,&pBackupData->guidSetId,sizeof(GUID));
         status = strncat(mfe.wcsMonitorFile, pItem->wszFilterName,strlen(pItem->wszFilterName));
-        if (0 != (status))
-        {
-            //NotifyClientDriverError(status);
-            //WriteEvent(FileReplData.DriverObject, status, L"ConfigAddMonitorSet.RtlStringCbCopyW2");
-            printk("ConfigAddMonitorSet.RtlStringCbCopyW2 error.");
-            return status;
-        }
 
         if(pItem->ulFileType == FILTER_TYPE_FILE)
         {
@@ -476,6 +468,10 @@ int ConfigAddMonitorSet(PFILEREPL_NOTIFICATION pfn,
 			break;
 ///////////////////////////////////////////////////////////////////////////////
         }
+		else
+		{
+			pmse->ulFileCount++;
+			}
     }
 
     return status;
@@ -494,7 +490,7 @@ int ConfigDelMonitorSet(PFILEREPL_NOTIFICATION pfn)
         return -1;
     }
 
-    mse.hdr.guidSetId=pfn->AddOrDel.BackupData.guidSetId;
+	memcpy(mse.hdr.guidSetId,pfn->AddOrDel.BackupData.guidSetId,sizeof(GUID));
     status = DelMonitorSet(&mse, true);
 
     return status;
