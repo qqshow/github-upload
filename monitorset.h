@@ -23,6 +23,7 @@ PMONITOR_SET_ENTRY GetMonitorSetEntry(
 						GUID guidSet
 						);
 
+int checkneedtolog(char *abspath);
  
 int AddMonitorSet(MONITOR_SET_ENTRY *pSet,BOOL bDelExist);
 
@@ -39,3 +40,7 @@ int ConfigDelMonitorSet(PFILEREPL_NOTIFICATION pfn);
 int ConfigDelMonitorItem(PFILEREPL_NOTIFICATION pfn);
 
 int ConfigDelAllMonitorSet();
+
+int SaveConfig();
+
+int LoadConfig();

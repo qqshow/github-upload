@@ -1,6 +1,7 @@
 #include "module.h"
 #include "monitorset.h"
 #include "rb.h"
+#include "fileop.h"
 
 void *EntryAlloc(struct kmem_cache * pmemcache)
 {
@@ -45,7 +46,7 @@ void EntryFree(struct kmem_cache * pmemcache, void *p)
  {	 
  	 PMONITOR_FILE_ENTRY pmfe = NULL;
 	 pmfe =(PMONITOR_FILE_ENTRY)EntryAlloc(FileReplData.Config.MonitorFiles.ItemLookAsideList);
-	 if(pmfe != NULL)
+	 if(pmfe == NULL)
 	 	printk("alloc mem for monitorfile failed.\n");
 	 return pmfe;
  }
@@ -104,6 +105,7 @@ void EntryFree(struct kmem_cache * pmemcache, void *p)
 
 int ConfigDelAllMonitorSet()
 {
+    SaveConfig();
 	return DelAllMonitorSet();
 }
 
@@ -137,7 +139,7 @@ int DumpAllMonitorSet()
 		 pmfe = rb_entry(node, MONITOR_FILE_ENTRY, hdr.rbnode);
 		 if(pmfe != NULL)
 		 {
-			printk( "UnitMonitorFiles, %s, ullSeqNo = %lld, bMonitor = 0x%x, bInited = 0x%x", 
+			printk( "UnitMonitorFiles, %s, ullSeqNo = %lld, bMonitor = 0x%x, bInited = 0x%x\n", 
             pmfe->wcsMonitorFile, 
             pmfe->ullSeqNo,
             pmfe->bMonitor,
@@ -208,7 +210,7 @@ int DumpAllMonitorSet()
 		 }
 	 }
  
- 
+     SaveConfig();
 	 return status;
  }
 
@@ -421,6 +423,7 @@ int ConfigAddMonitorSet(PFILEREPL_NOTIFICATION pfn,
     {
     	printk("RTB: Filter num %d,count is %d. filter name is %s.\n",ulI,pBackupData->ulFilterItemCounts,pItem->wszFilterName);
 		memset(&mfe,0,sizeof(mfe));
+		mfe.pSetEntry = pmse;
 		memcpy(&mfe.hdr.guidSetId,&pBackupData->guidSetId,sizeof(GUID));
         status = strncat(mfe.wcsMonitorFile, pItem->wszFilterName,strlen(pItem->wszFilterName));
 
@@ -473,7 +476,7 @@ int ConfigAddMonitorSet(PFILEREPL_NOTIFICATION pfn,
 			pmse->ulFileCount++;
 			}
     }
-
+    SaveConfig();
     return status;
 }
 
@@ -490,9 +493,9 @@ int ConfigDelMonitorSet(PFILEREPL_NOTIFICATION pfn)
         return -1;
     }
 
-	memcpy(mse.hdr.guidSetId,pfn->AddOrDel.BackupData.guidSetId,sizeof(GUID));
+	memcpy(&mse.hdr.guidSetId,&pfn->AddOrDel.BackupData.guidSetId,sizeof(GUID));
     status = DelMonitorSet(&mse, true);
-
+    SaveConfig();
     return status;
 }
 
@@ -621,6 +624,23 @@ int DelMonitorSet(MONITOR_SET_ENTRY *pSet,BOOL bNeedSync)
 }
 
 
+
+// check need to log or not
+int checkneedtolog(char *abspath)
+{
+	PMONITOR_FILE_ENTRY pmfe = NULL;
+	pmfe = mi_search(&FileReplData.Config.MonitorFiles.RBTree,abspath);
+	if(pmfe)
+		return 1;
+	else
+		return 0;
+//	if(strncmp(abspath,"/test/",strlen("/test/")) == 0 )
+//		return 1;
+//	else
+//		return 0;
+}
+
+
 int  InitMonitorSet(void)
 {
 	int status = 0;
@@ -660,7 +680,7 @@ int  InitMonitorSet(void)
 		FileReplData.Config.MonitorFiles.RBTree = RB_ROOT;
 
 
-	
+	    LoadConfig();
 	return status;
 }
 
@@ -673,7 +693,7 @@ UninitMonitorSet(void)
 	// FPLogF("UninitMonitorSet ==>");
 	// SaveMonitorFiles();
 
-	printk("UninitMonitorSet");
+	printk("UninitMonitorSet\n");
 	DumpAllMonitorSet();
 	DelAllMonitorSet();
 	DumpAllMonitorSet();
@@ -682,7 +702,207 @@ UninitMonitorSet(void)
 	kmem_cache_destroy(FileReplData.Config.MonitorFiles.ItemLookAsideList);
 	kmem_cache_destroy(FileReplData.Config.MonitorSet.ItemLookAsideList);
 
-	printk("UninitMonitorSet exit");
+	printk("UninitMonitorSet exit\n");
 
 	return status;
 }
+
+
+/*****************************************************************************
+ * Function      : LoadConfig
+ * Description   : load config 
+ * Input          : None
+ * Output        : None
+ * Return        : 
+ * Others        : 
+ * Record
+ * 1.Date        : 20141016
+ *   Author      : lb
+ *   Modification: Created function
+
+*****************************************************************************/
+int LoadConfig()
+{
+    int ret = 0;
+    int i = 0;
+	CONFIG_FILE_HEADER cfh;
+	ULONG cfh_size  = 0;
+    ULONG readoffset = 0;
+	struct file *filep = NULL;
+    struct rb_node *node = NULL;
+	PMONITOR_FILE_ENTRY pmfe = NULL;
+    PMONITOR_SET_ENTRY pmse = NULL;
+
+    printk("RTB: LoadConfig.\n");
+    cfh_size = sizeof(CONFIG_FILE_HEADER);
+	memset(&cfh,0,cfh_size);
+
+    filep = file_open("/etc/rtb.cnf",O_RDONLY, 777);
+	if (IS_ERR(filep))
+	{
+        printk("RTB: open config file error\n");
+        goto out;
+	}
+
+    //read config header
+    if(file_read(filep, 0, &cfh, sizeof(CONFIG_FILE_HEADER)) != sizeof(CONFIG_FILE_HEADER))
+    {
+        printk("RTB: read config file header error \n");
+        goto out;
+    }
+    FileReplData.Config.dwLastNormalShutdown = cfh.ulLastShutdownStatus;
+    printk("RTB: header size %d. shutdown status %d. set offset %d. set size %d. file offset %d. \
+        file size %d\n",cfh.ulHeaderSize,cfh.ulLastShutdownStatus,cfh.ulOffsetSet,cfh.ulSizeSet,\
+          cfh.ulOffsetFiles,cfh.ulSizeFiles);
+
+    //read backup set
+    for(i=0; i < cfh.ulSizeSet / sizeof(MONITOR_SET_ENTRY); i++)
+    {
+        pmse = MonitorSetEntryAlloc();
+        if(pmse == NULL)
+            goto out;
+
+        
+        if(file_read(filep, cfh.ulOffsetSet + i * sizeof(MONITOR_SET_ENTRY), pmse, \
+            sizeof(MONITOR_SET_ENTRY)) != sizeof(MONITOR_SET_ENTRY))
+        {
+            printk("RTB: read backup set error \n");
+            goto out;
+        }
+        printk("RTB: loadconfig monitor set guid %d.\n",pmse->hdr.guidSetId.Data1);
+        ms_insert(&FileReplData.Config.MonitorSet.RBTree, pmse);
+    }
+
+    //read backup item
+    for(i=0; i < cfh.ulSizeFiles / sizeof(MONITOR_FILE_ENTRY); i++)
+    {
+        pmfe = MonitorFileEntryAlloc();
+        if(pmfe == NULL)
+            goto out;
+
+        
+        if(file_read(filep, cfh.ulOffsetFiles+ i * sizeof(MONITOR_FILE_ENTRY), pmfe, \
+            sizeof(MONITOR_FILE_ENTRY)) != sizeof(MONITOR_FILE_ENTRY))
+        {
+            printk("RTB: read backup file error \n");
+            goto out;
+        }
+
+        pmse = ms_search(&FileReplData.Config.MonitorSet.RBTree,pmfe->hdr.guidSetId);
+        if(pmse != NULL)
+        {
+            pmfe->pSetEntry = pmse;
+            printk("RTB: loadconfig monitor item %s.\n",pmfe->wcsMonitorFile);
+            mi_insert(&FileReplData.Config.MonitorFiles.RBTree, pmfe);
+        }
+        else
+        {
+            MonitorFileEntryFree(pmfe);
+        }
+    }
+    
+out:
+    if(filep)
+        file_close(filep);
+    return ret;
+	
+    
+}
+
+/*****************************************************************************
+ * Function      : SaveConfig
+ * Description   : save config
+ * Input          : None
+ * Output        : None
+ * Return        : 
+ * Others        : 
+ * Record
+ * 1.Date        : 20141016
+ *   Author      : lb
+ *   Modification: Created function
+
+*****************************************************************************/
+int SaveConfig()
+{
+    int ret = 0;
+	CONFIG_FILE_HEADER cfh;
+	ULONG cfh_size  = 0;
+    ULONG writeoffset = 0;
+	struct file *filep = NULL;
+    struct rb_node *node = NULL;
+	PMONITOR_FILE_ENTRY pmfe = NULL;
+    PMONITOR_SET_ENTRY pmse = NULL;
+    
+
+    
+	printk("RTB: SaveConfig.\n");
+	cfh_size = sizeof(CONFIG_FILE_HEADER);
+	memset(&cfh,0,cfh_size);
+	cfh.ulLastShutdownStatus = FileReplData.Config.dwLastNormalShutdown;
+    cfh.ulHeaderSize = cfh_size;
+
+    filep = file_open("/etc/rtb.cnf",O_WRONLY | O_CREAT, 777);
+	if (IS_ERR(filep))
+	{
+        printk("RTB: open config file error\n");
+        goto out;
+	}
+        
+
+    //write header
+    if (file_write(filep, 0, (char *)&cfh, cfh_size) != cfh_size)
+    {
+        printk("RTB: write config file error\n");
+        goto out;
+    }
+    
+    writeoffset += cfh_size;
+		
+    cfh.ulOffsetSet = writeoffset;
+    //write monitor set
+    for (node = rb_first(&FileReplData.Config.MonitorSet.RBTree); node; node = rb_next(node))
+    {
+        pmse = rb_entry(node, MONITOR_SET_ENTRY, hdr.rbnode);
+        printk("RTB: monitor set guid %d.\n",pmse->hdr.guidSetId.Data1);
+        if(file_write(filep, writeoffset, (char *)pmse, sizeof(MONITOR_SET_ENTRY)) != sizeof(MONITOR_SET_ENTRY))
+        {
+            printk("RTB: write monitor set error\n");
+            goto out;
+        }
+        writeoffset += sizeof(MONITOR_SET_ENTRY);
+        cfh.ulSizeSet += sizeof(MONITOR_SET_ENTRY);
+    }
+
+    cfh.ulOffsetFiles = writeoffset;
+    //write monitor item
+    for (node = rb_first(&FileReplData.Config.MonitorFiles.RBTree); node; node = rb_next(node))
+    {
+        pmfe = rb_entry(node, MONITOR_FILE_ENTRY, hdr.rbnode);
+        printk("RTB: monitor file %s\n",pmfe->wcsMonitorFile);
+        if(file_write(filep, writeoffset, (char *)pmfe, sizeof(MONITOR_FILE_ENTRY)) != sizeof(MONITOR_FILE_ENTRY))
+        {
+            printk("RTB: write monitor item error\n");
+            goto out;
+        }
+        writeoffset += sizeof(MONITOR_FILE_ENTRY);
+        cfh.ulSizeFiles += sizeof(MONITOR_FILE_ENTRY);
+    }
+
+
+    //rewrite header
+    if (file_write(filep, 0, (char *)&cfh, cfh_size) != cfh_size)
+    {
+        printk("RTB: rewrite config file error\n");
+        goto out;
+    }
+
+out:
+    if(filep)
+        file_close(filep);
+    return ret;
+	
+	
+
+	
+}
+

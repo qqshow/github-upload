@@ -58,8 +58,7 @@ int init_rtbackup(void) {
 
 	if (IN_ERR(ret))
 		return ret;
-	//hijack vfs function
-	hijack_syscalls();
+
 
 	netlink_fd = netlink_kernel_create(&init_net, USER_NETLINK_CMD, 0, netlink_recv_packet, NULL, THIS_MODULE);
 	if(NULL == netlink_fd)
@@ -75,7 +74,9 @@ int init_rtbackup(void) {
 		printk("initmonitorset error.\n");
 		return ret;
 	}	
-	
+
+    //hijack vfs function
+	hijack_syscalls();
 	return ret;
 }
 

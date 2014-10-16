@@ -31,6 +31,7 @@
 #include <linux/version.h>
 #include <linux/delay.h>
 #include <linux/time.h>
+#include "monitorset.h"
 
 // vfs function definition
 /*
@@ -55,18 +56,6 @@ struct kernsym sym_vfs_unlink;
 struct kernsym sym_vfs_rename;
 
 struct kernsym sym_do_truncate;
-
-
-
-// check need to log or not
-int checkneedtolog(char *abspath)
-{
-
-	if(strncmp(abspath,"/test/",strlen("/test/")) == 0 )
-		return 1;
-	else
-		return 0;
-}
 
 
 int (rtb_do_truncate)(struct dentry *dentry, loff_t length, unsigned int time_attrs,

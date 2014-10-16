@@ -101,10 +101,10 @@ int main(int argc, char **argv)
 	
 	
 	//delete all backup set
-	replnotify.Type = NOTIFY_TYPE_DELALL;
-	ret = DelAllBackup(&replnotify.AddOrDel.BackupData);
-	
-	ret = UnInitCommunicate();
+//	replnotify.Type = NOTIFY_TYPE_DELALL;
+//	ret = DelAllBackup(&replnotify.AddOrDel.BackupData);
+//	
+//	ret = UnInitCommunicate();
 
 
 
