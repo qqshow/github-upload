@@ -41,22 +41,22 @@
 ulonglong getseqno(void);
 
 
-int createiologformkdir(ulonglong ullSeqNo, char *abspath,int mode);
+int createiologformkdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs, char *iologdir,char *abspath,int mode);
 
-int createiologforcreatefile(ulonglong ullSeqNo, char *abspath,int mode);
+int createiologforcreatefile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *abspath,int mode);
 
-int createiologforrmdir(ulonglong ullSeqNo, char *abspath);
+int createiologforrmdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs, char *iologdir,char *abspath);
 
-int createiologforrmfile(ulonglong ullSeqNo, char *abspath);
+int createiologforrmfile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *abspath);
 
-int createiologforrename(ulonglong ullSeqNo, char *oldabspath, char *newabspath);
+int createiologforrename(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *oldabspath, char *newabspath);
 
-int createiologforcreatesymlink(ulonglong ullSeqNo, char *symlinkabspath, char *dstabspath);
+int createiologforcreatesymlink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *symlinkabspath, char *dstabspath);
 
-int createiologforcreatelink(ulonglong ullSeqNo, char *linkabspath, char *dstabspath);
+int createiologforcreatelink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *linkabspath, char *dstabspath);
 
-int createiologforwrite(ulonglong ullSeqNo, char *abspath,char *writebuff, size_t count, loff_t *pos);
+int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *abspath,char *writebuff, size_t count, loff_t *pos);
 
-
+int createiologforerror(ulonglong ullSeqNo,ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir, char *abspath);
 #endif
 

@@ -31,26 +31,30 @@ ulonglong getseqno(void)
 }
 
 
-
 int createiolog(char *iologpath, PLOG_FILE iologfile, int iologfilesize)
 {
 	int ret = -1;
 	struct file *filep = NULL;
-	filep = file_open(iologpath, O_WRONLY | O_CREAT, 777); 
-	if (IS_ERR(filep))		
-		goto out;	    
+	//filep = file_open(iologpath, O_WRONLY | O_CREAT, 777);     
+	filep = file_open(iologpath,O_WRONLY | O_CREAT,777);
+	if (IS_ERR(filep))	
+	{
+        printk("RTB: createiolog error\n");
+        return ret;
+	}    
 	if (file_write(filep, 0, (char *)iologfile, iologfile->hdr.ulLogSize) != iologfile->hdr.ulLogSize)
 		goto out;
+	
 	ret = 0;
 
 	if(filep)
 		file_close(filep);
-	out:
+out:
 		return ret;
 }
 
 
-int createiologformkdir(ulonglong ullSeqNo, char *abspath,int mode)
+int createiologformkdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *abspath,int mode)
 {
 	int iret = -1;
 	char iologpath[NAME_MAX] = {0};
@@ -71,12 +75,16 @@ int createiologformkdir(ulonglong ullSeqNo, char *abspath,int mode)
 	iologfile->hdr.bIsDir = 1;
 	iologfile->hdr.ulHeaderSize = sizeof(LOG_FILE_HEADER);
 	iologfile->hdr.ullSeqNo = ullSeqNo;
+    iologfile->hdr.ullGolbalSeqNo = ullGlobalSeqNo;
+    iologfile->hdr.liSystemTime.QuadPart = timesecs;
 
 	iologfile->hdr.ulLogSize = sizeof(LOG_FILE);
 
 	strncpy(iologfile->hdr.wszFilePath, abspath, len);
 
-	snprintf(iologpath, NAME_MAX, "/%s/%lld", "iologs",ullSeqNo);
+	snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
+
+    printk("RTB: creatiologformkdir iologpath %s. strlen %d.\n",iologpath,strlen(iologpath));
 
 	iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 	if(iret != 0)
@@ -90,7 +98,7 @@ out:
 	return iret;
 }
 
-int createiologforcreatefile(ulonglong ullSeqNo, char *abspath,int mode)
+int createiologforcreatefile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir, char *abspath,int mode)
 {
 
 		int iret = -1;
@@ -111,12 +119,14 @@ int createiologforcreatefile(ulonglong ullSeqNo, char *abspath,int mode)
 		iologfile->hdr.ulType = LOG_FILE_TYPE_NEWFILE;
 		iologfile->hdr.ulHeaderSize = sizeof(LOG_FILE_HEADER);
 		iologfile->hdr.ullSeqNo = ullSeqNo;
+        iologfile->hdr.ullGolbalSeqNo = ullGlobalSeqNo;
+        iologfile->hdr.liSystemTime.QuadPart = timesecs;
 	
 		iologfile->hdr.ulLogSize = sizeof(LOG_FILE);
 	
 		strncpy(iologfile->hdr.wszFilePath, abspath, len);
 	
-		snprintf(iologpath, NAME_MAX, "/%s/%lld", "iologs",ullSeqNo);
+		snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
 	
 		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 		if(iret != 0)
@@ -133,12 +143,13 @@ int createiologforcreatefile(ulonglong ullSeqNo, char *abspath,int mode)
 }
 
 
-int createiologforrmdir(ulonglong ullSeqNo, char *abspath)
+int createiologforrmdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs, char *iologdir,char *abspath)
 {
 		int iret = -1;
 		char iologpath[NAME_MAX] = {0};
 		PLOG_FILE iologfile = NULL;
 		int len = strlen(abspath);
+
 
 		
 		if(len > 260)
@@ -156,12 +167,14 @@ int createiologforrmdir(ulonglong ullSeqNo, char *abspath)
 		iologfile->hdr.bIsDir = 1;
 		iologfile->hdr.ulHeaderSize = sizeof(LOG_FILE_HEADER);
 		iologfile->hdr.ullSeqNo = ullSeqNo;
+        iologfile->hdr.ullGolbalSeqNo = ullGlobalSeqNo;
+        iologfile->hdr.liSystemTime.QuadPart = timesecs;
 	
 		iologfile->hdr.ulLogSize = sizeof(LOG_FILE);
 	
 		strncpy(iologfile->hdr.wszFilePath, abspath, len);
 	
-		snprintf(iologpath, NAME_MAX, "/%s/%lld", "iologs",ullSeqNo);
+		snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
 	
 		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 		if(iret != 0)
@@ -177,7 +190,7 @@ int createiologforrmdir(ulonglong ullSeqNo, char *abspath)
 
 }
 
-int createiologforrmfile(ulonglong ullSeqNo, char *abspath)
+int createiologforrmfile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs, char *iologdir,char *abspath)
 {
 		int iret = -1;
 		char iologpath[NAME_MAX] = {0};
@@ -198,12 +211,14 @@ int createiologforrmfile(ulonglong ullSeqNo, char *abspath)
 		iologfile->hdr.ulType = LOG_FILE_TYPE_DELETEFILE;
 		iologfile->hdr.ulHeaderSize = sizeof(LOG_FILE_HEADER);
 		iologfile->hdr.ullSeqNo = ullSeqNo;
+        iologfile->hdr.ullGolbalSeqNo = ullGlobalSeqNo;
+        iologfile->hdr.liSystemTime.QuadPart = timesecs;
 	
 		iologfile->hdr.ulLogSize = sizeof(LOG_FILE);
 	
 		strncpy(iologfile->hdr.wszFilePath, abspath, len);
 	
-		snprintf(iologpath, NAME_MAX, "/%s/%lld", "iologs",ullSeqNo);
+		snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
 	
 		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 		if(iret != 0)
@@ -218,7 +233,49 @@ int createiologforrmfile(ulonglong ullSeqNo, char *abspath)
 
 }
 
-int createiologforrename(ulonglong ullSeqNo, char *oldabspath, char *newabspath)
+
+int createiologforerror(ulonglong ullSeqNo,ulonglong ullGlobalSeqNo, ulonglong timesecs, char *iologdir,char *abspath)
+{
+    	int iret = -1;
+		char iologpath[NAME_MAX] = {0};
+		PLOG_FILE iologfile = NULL;
+		int len = strlen(abspath);
+		if(len > 260)
+			len = 260;
+	
+		iologfile = kmalloc(sizeof(LOG_FILE), GFP_KERNEL);
+		if(iologfile == NULL)
+		{
+		  iret = -1;
+		  return iret;
+		}
+		memset(iologfile,0,sizeof(LOG_FILE));
+	
+		iologfile->hdr.ulType = LOG_FILE_TYPE_ERROR;
+		iologfile->hdr.ulHeaderSize = sizeof(LOG_FILE_HEADER);
+		iologfile->hdr.ullSeqNo = ullSeqNo;
+        iologfile->hdr.ullGolbalSeqNo = ullGlobalSeqNo;
+        iologfile->hdr.liSystemTime.QuadPart = timesecs;
+	
+		iologfile->hdr.ulLogSize = sizeof(LOG_FILE);
+	
+		strncpy(iologfile->hdr.wszFilePath, abspath, len);
+	
+		snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
+	
+		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
+		if(iret != 0)
+			printk("create io log error.\n");
+		
+	out:	
+		if(iologfile)
+			kfree(iologfile);
+	
+		
+		return iret;
+}
+
+int createiologforrename(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *oldabspath, char *newabspath)
 {
 		int iret = -1;
 		char iologpath[NAME_MAX] = {0};
@@ -245,13 +302,14 @@ int createiologforrename(ulonglong ullSeqNo, char *oldabspath, char *newabspath)
 		iologfile->hdr.ulType = LOG_FILE_TYPE_RENAMEFILE;
 		iologfile->hdr.ulHeaderSize = sizeof(LOG_FILE_HEADER);
 		iologfile->hdr.ullSeqNo = ullSeqNo;
-	
+        iologfile->hdr.ullGolbalSeqNo = ullGlobalSeqNo;
+	    iologfile->hdr.liSystemTime.QuadPart = timesecs;
 		iologfile->hdr.ulLogSize = iologfilelen;
 	
 		strncpy(iologfile->hdr.wszFilePath, oldabspath, oldlen);
 		strncpy(iologfile->Data, newabspath, newlen);
 	
-		snprintf(iologpath, NAME_MAX, "/%s/%lld", "iologs",ullSeqNo);
+		snprintf(iologpath, NAME_MAX, "%s%lld",iologdir,ullSeqNo);
 	
 		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 		if(iret != 0)
@@ -267,7 +325,7 @@ int createiologforrename(ulonglong ullSeqNo, char *oldabspath, char *newabspath)
 
 }
 
-int createiologforcreatesymlink(ulonglong ullSeqNo, char *symlinkabspath, char *dstabspath)
+int createiologforcreatesymlink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *symlinkabspath, char *dstabspath)
 {
 	int iret = -1;
 	char iologpath[NAME_MAX] = {0};
@@ -294,13 +352,15 @@ int createiologforcreatesymlink(ulonglong ullSeqNo, char *symlinkabspath, char *
 	iologfile->hdr.ulType = LOG_FILE_TYPE_SOFTLINK;
 	iologfile->hdr.ulHeaderSize = sizeof(LOG_FILE_HEADER);
 	iologfile->hdr.ullSeqNo = ullSeqNo;
+    iologfile->hdr.ullGolbalSeqNo = ullGlobalSeqNo;
+    iologfile->hdr.liSystemTime.QuadPart = timesecs;
 
 	iologfile->hdr.ulLogSize = iologfilelen;
 
 	strncpy(iologfile->hdr.wszFilePath, dstabspath, oldlen);
 	strncpy(iologfile->Data, symlinkabspath, newlen);
 
-	snprintf(iologpath, NAME_MAX, "/%s/%lld", "iologs",ullSeqNo);
+	snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
 
 	iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 	if(iret != 0)
@@ -316,7 +376,8 @@ out:
 
 }
 
-int createiologforcreatelink(ulonglong ullSeqNo, char *linkabspath, char *dstabspath)
+int createiologforcreatelink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,\
+    char *linkabspath, char *dstabspath)
 {
 		int iret = -1;
 		char iologpath[NAME_MAX] = {0};
@@ -342,14 +403,16 @@ int createiologforcreatelink(ulonglong ullSeqNo, char *linkabspath, char *dstabs
 	
 		iologfile->hdr.ulType = LOG_FILE_TYPE_HARDLINK;
 		iologfile->hdr.ulHeaderSize = sizeof(LOG_FILE_HEADER);
-		iologfile->hdr.ullSeqNo = ullSeqNo;
+    	iologfile->hdr.ullSeqNo = ullSeqNo;
+        iologfile->hdr.ullGolbalSeqNo = ullGlobalSeqNo;
+        iologfile->hdr.liSystemTime.QuadPart = timesecs;
 	
 		iologfile->hdr.ulLogSize = iologfilelen;
 	
 		strncpy(iologfile->hdr.wszFilePath, dstabspath, oldlen);
 		strncpy(iologfile->Data, linkabspath, newlen);
 	
-		snprintf(iologpath, NAME_MAX, "/%s/%lld", "iologs",ullSeqNo);
+		snprintf(iologpath, NAME_MAX, "%s%lld",iologdir,ullSeqNo);
 	
 		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 		if(iret != 0)
@@ -364,7 +427,8 @@ int createiologforcreatelink(ulonglong ullSeqNo, char *linkabspath, char *dstabs
 
 }
 
-int createiologforwrite(ulonglong ullSeqNo, char *abspath,char *writebuff, size_t count, loff_t *pos)
+int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,\
+    char *abspath,char *writebuff, size_t count, loff_t *pos)
 {
 
 		int iret = -1;
@@ -386,13 +450,16 @@ int createiologforwrite(ulonglong ullSeqNo, char *abspath,char *writebuff, size_
 		iologfile->hdr.ulType = LOG_FILE_TYPE_WRITE;
 		iologfile->hdr.ulHeaderSize = sizeof(LOG_FILE_HEADER);
 		iologfile->hdr.ullSeqNo = ullSeqNo;
+        iologfile->hdr.ullGolbalSeqNo = ullGlobalSeqNo;
+        iologfile->hdr.liSystemTime.QuadPart = timesecs;
 		iologfile->hdr.write.Length = count;
+        iologfile->hdr.ulLogSize = iologfilelen;
 		iologfile->hdr.write.ByteOffset.QuadPart = *pos;
-		iologfile->hdr.ulLogSize = iologfilelen;
+		
 	
 		strncpy(iologfile->hdr.wszFilePath, abspath, len);
 	
-		snprintf(iologpath, NAME_MAX, "/%s/%lld", "iologs",ullSeqNo);
+		snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
 	
 		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 		if(iret != 0)

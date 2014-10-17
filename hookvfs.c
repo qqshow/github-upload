@@ -95,30 +95,67 @@ int (rtb_vfs_rename)(struct inode *old_dir, struct dentry *old_dentry,
 	int ret;
     char *oldabspath = NULL;
 	char *newabspath = NULL;
+    PMONITOR_FILE_ENTRY pmfe = NULL;
+    int ineedtolog = 0;
+    ULONGLONG ullseqno = 0;
+    ULONGLONG ullGlobalSeqno = 0;
+    ULONG timesec = 0;
+    char *iologdir  = NULL;
+    iologdir = kmalloc(PATH_MAX,GFP_KERNEL);
 	oldabspath = kmalloc(PATH_MAX, GFP_KERNEL);
 	newabspath = kmalloc(PATH_MAX, GFP_KERNEL);
-	if(oldabspath == NULL || newabspath == NULL)
+	if(oldabspath == NULL || newabspath == NULL || iologdir == NULL)
 	{
 		printk("vfs_rmname.....malloc error\n");
        	goto out;
 	}
 	memset(oldabspath,0,PATH_MAX);
 	memset(newabspath,0,PATH_MAX);
+    memset(iologdir,0,PATH_MAX);
     
-    getabsfullpathfromdentry(old_dentry,oldabspath);
+    
 	getabsfullpathfromdentry(new_dentry,newabspath);
-	printk("Rename from %s to %s.\n",oldabspath,newabspath);
+    getabsfullpathfromdentry(old_dentry,oldabspath);
+    pmfe = GetMonitorFileEntryByabspath(newabspath);
+    if(pmfe != NULL)
+    {
+        ineedtolog = 1;
+        
+        
+    }
+    else
+    {
+        pmfe = GetMonitorFileEntryByabspath(oldabspath);
+        if(pmfe != NULL)
+        {
+            ineedtolog = 1;
+        }
+    }
+    printk("Rename from %s to %s.\n",oldabspath,newabspath);
+    if(ineedtolog)
+    {
+        GetMonitorFileSeqNoByMonitorFileEntry(pmfe, &ullseqno, &ullGlobalSeqno, &timesec,iologdir);
+        printk("RTB: Rename seq: %lld. gseq: %lld. time: %lld.\n",ullseqno,ullGlobalSeqno,timesec);
+    }
+
 
 out:
 	ret = run(old_dir,old_dentry,new_dir,new_dentry);
 	/* move include move in and move out. Don't forget to deal with .   add by lb, 2014-09-24 */ 
-	if(ret == 0 && (checkneedtolog(oldabspath) || checkneedtolog(newabspath)))
-		createiologforrename(getseqno(),oldabspath,newabspath);
+	if(ret == 0 && ineedtolog)
+		createiologforrename(ullseqno,ullGlobalSeqno,timesec,iologdir,oldabspath,newabspath);
+    else if(ineedtolog)
+        createiologforerror(ullseqno, ullGlobalSeqno, timesec,iologdir, newabspath);
+
+    
 	if(oldabspath)
         kfree(oldabspath);
 
 	if(newabspath)
         kfree(newabspath);
+
+    if(iologdir)
+        kfree(iologdir);
     return ret;  
 
 
@@ -130,13 +167,21 @@ int (rtb_vfs_unlink)(struct inode *dir, struct dentry *dentry)
     int(*run)(struct inode *,struct dentry *) = sym_vfs_unlink.run;
 	int ret;
     char *abspath = NULL;
+    PMONITOR_FILE_ENTRY pmfe = NULL;
+    int ineedtolog = 0;
+    ULONGLONG ullseqno = 0;
+    ULONGLONG ullGlobalSeqno = 0;
+    ULONG timesec = 0;
+    char *iologdir = NULL;
+    iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
-	if(abspath == NULL)
+	if(abspath == NULL || iologdir == NULL)
 	{
 		printk("vfs_unlink.....malloc error\n");
         return run(dir,dentry);
 	}
 	memset(abspath,0,PATH_MAX);
+    memset(iologdir,0,PATH_MAX);
     if(dir)
     {
         printk("vfs_unlink.....\n");
@@ -144,11 +189,25 @@ int (rtb_vfs_unlink)(struct inode *dir, struct dentry *dentry)
     
     getabsfullpathfromdentry(dentry,abspath);
 	printk("vfs_unlink %s.\n",abspath);
+
+    
+    pmfe = GetMonitorFileEntryByabspath(abspath);
+    if(pmfe != NULL)
+    {
+        ineedtolog = 1;   
+        GetMonitorFileSeqNoByMonitorFileEntry(pmfe, &ullseqno, &ullGlobalSeqno, &timesec,iologdir);
+        printk("RTB: unlink seq: %lld. gseq: %lld. time: %lld.\n",ullseqno,ullGlobalSeqno,timesec);
+    }
     ret = run(dir,dentry);
-	if(ret == 0 && checkneedtolog(abspath))
-		createiologforrmfile(getseqno(),abspath);
+	if(ret == 0 && ineedtolog)
+		createiologforrmfile(ullseqno, ullGlobalSeqno, timesec, iologdir,abspath);
+    else if(ineedtolog)
+        createiologforerror(ullseqno, ullGlobalSeqno, timesec, iologdir,abspath);
 	if(abspath)
         kfree(abspath);
+
+    if(iologdir)
+        kfree(iologdir);
     return ret;   
 
 
@@ -160,6 +219,15 @@ int (rtb_vfs_rmdir)(struct inode *dir, struct dentry *dentry)
     int(*run)(struct inode *,struct dentry *) = sym_vfs_rmdir.run;
 	int ret;
     char *abspath = NULL;
+    //char iologdir[PATH_MAX] = {0};
+    char *iologdir  = NULL;
+    
+    PMONITOR_FILE_ENTRY pmfe = NULL;
+    int ineedtolog = 0;
+    ULONGLONG ullseqno = 0;
+    ULONGLONG ullGlobalSeqno = 0;
+    ULONG timesec = 0;  
+    iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
 	if(abspath == NULL)
 	{
@@ -167,6 +235,7 @@ int (rtb_vfs_rmdir)(struct inode *dir, struct dentry *dentry)
         return run(dir,dentry);
 	}
 	memset(abspath,0,PATH_MAX);
+    memset(iologdir,0,PATH_MAX);
     if(dir)
     {
         printk("vfs_rmdir.....\n");
@@ -176,12 +245,25 @@ int (rtb_vfs_rmdir)(struct inode *dir, struct dentry *dentry)
     printk("dentry->dparent  %s.\n",dentry->d_parent->d_name.name);
     getabsfullpathfromdentry(dentry,abspath);
 	printk("vfs_rmdir %s.\n",abspath);
+     pmfe = GetMonitorFileEntryByabspath(abspath);
+    if(pmfe != NULL)
+    {
+        ineedtolog = 1;
+        GetMonitorFileSeqNoByMonitorFileEntry(pmfe, &ullseqno, &ullGlobalSeqno, &timesec,iologdir);
+        printk("RTB: rmdir seq: %lld. gseq: %lld. time: %lld.\n",ullseqno,ullGlobalSeqno,timesec);
+        
+    }
     ret = run(dir,dentry);
 	printk("vfs_rmdir return %d.\n",ret);
-	if(ret == 0 && checkneedtolog(abspath))
-		createiologforrmdir(getseqno(), abspath);
+	if(ret == 0 && ineedtolog)
+		createiologforrmdir(ullseqno, ullGlobalSeqno, timesec, iologdir,abspath);
+    else if(ineedtolog)
+        createiologforerror(ullseqno, ullGlobalSeqno, timesec, iologdir,abspath);
 	if(abspath)
         kfree(abspath);
+
+    if(iologdir)
+        kfree(iologdir);
     return ret;   
 
 
@@ -194,19 +276,28 @@ int (rtb_vfs_create)(struct inode *dir, struct dentry *dentry, int mode,
 	int(*run)(struct inode *,struct dentry *, int ,struct nameidata *) = sym_vfs_create.run;
 	int ret = 0,iret = 0;
     char *abspath = NULL;
+    char *iologdir = NULL;
+    PMONITOR_FILE_ENTRY pmfe = NULL;
+    int ineedtolog = 0;
+    ULONGLONG ullseqno = 0;
+    ULONGLONG ullGlobalSeqno = 0;
+    ULONG timesec = 0;  
+    
 	if(dentry->d_inode != NULL)
 	{
 		printk("open file\n");
 		goto out;
 	}
 	printk("create new file\n");
+    iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
-	if(abspath == NULL)
+	if(abspath == NULL || iologdir == NULL)
 	{
 		printk("vfs_create.....malloc error\n");
         goto out;
 	}
 	memset(abspath,0,PATH_MAX);
+    memset(iologdir,0,PATH_MAX);
     if(dir)
     {
         printk("vfs_create.....\n");
@@ -215,12 +306,27 @@ int (rtb_vfs_create)(struct inode *dir, struct dentry *dentry, int mode,
 	iret = getabsfullpathfromdentry(dentry,abspath);
 	printk("vfs_create file %s\n",abspath);
 
+     pmfe = GetMonitorFileEntryByabspath(abspath);
+    if(pmfe != NULL)
+    {
+        ineedtolog = 1;
+        
+        GetMonitorFileSeqNoByMonitorFileEntry(pmfe, &ullseqno, &ullGlobalSeqno, &timesec,iologdir);
+        printk("RTB: create seq: %lld. gseq: %lld. time: %lld.\n",ullseqno,ullGlobalSeqno,timesec);
+    }
+
 out:
-	if(abspath)
-		kfree(abspath);
 	ret = run(dir,dentry,mode,nd);
-	if(ret == 0 && checkneedtolog(abspath))
-		createiologforcreatefile(getseqno(),abspath,mode);
+	if(ret == 0 && ineedtolog)
+		createiologforcreatefile(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath,mode);
+    else if(ineedtolog)
+        createiologforerror(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath);
+
+    if(abspath)
+		kfree(abspath);
+
+    if(iologdir)
+        kfree(iologdir);
 	return ret;
 }
 
@@ -231,15 +337,23 @@ int (rtb_vfs_symlink)(struct inode *dir, struct dentry *dentry, const char *oldn
 		int ret;
 		char *oldabspath = NULL;
 		char *newabspath = NULL;
+        char *iologdir = NULL;
+        PMONITOR_FILE_ENTRY pmfe = NULL;
+        int ineedtolog = 0;
+        ULONGLONG ullseqno = 0;
+        ULONGLONG ullGlobalSeqno = 0;
+        ULONG timesec = 0;  
+        iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
 		oldabspath = kmalloc(PATH_MAX, GFP_KERNEL);
 		newabspath = kmalloc(PATH_MAX, GFP_KERNEL);
-		if(oldabspath == NULL || newabspath == NULL)
+		if(oldabspath == NULL || newabspath == NULL || iologdir == NULL)
 		{
 			printk("vfs_symlink.....malloc error\n");
 			goto out;
 		}
 		memset(oldabspath,0,PATH_MAX);
 		memset(newabspath,0,PATH_MAX);
+        memset(iologdir,0,PATH_MAX);
 		if(dir)
 		{
 			printk("vfs_symlink.....\n");
@@ -248,15 +362,29 @@ int (rtb_vfs_symlink)(struct inode *dir, struct dentry *dentry, const char *oldn
 		getabsfullpathfromdentry(dentry,newabspath);
 
 		printk("create symlink from %s to %s\n",oldabspath,newabspath);
+        pmfe = GetMonitorFileEntryByabspath(newabspath);
+        if(pmfe != NULL)
+        {
+            ineedtolog = 1;
+            GetMonitorFileSeqNoByMonitorFileEntry(pmfe, &ullseqno, &ullGlobalSeqno, &timesec,iologdir);
+            printk("RTB: synlink seq: %lld. gseq: %lld. time: %lld.\n",ullseqno,ullGlobalSeqno,timesec);         
+            
+        }
+
+ 
 	out:
 		ret = run(dir,dentry,oldname);
 		printk("create symlink return %d.\n",ret);
-		if(ret == 0 && checkneedtolog(newabspath))
-			createiologforcreatesymlink(getseqno(),newabspath,oldabspath);
+		if(ret == 0 && ineedtolog)
+			createiologforcreatesymlink(ullseqno,ullGlobalSeqno,timesec,iologdir,newabspath,oldabspath);
+        else if(ineedtolog)
+            createiologforerror(ullseqno,ullGlobalSeqno,timesec,iologdir,newabspath);
 		if(oldabspath)
 			kfree(oldabspath);
 		if(newabspath)
 			kfree(newabspath);
+        if(iologdir)
+            kfree(iologdir);
 		return ret;  
 
 }
@@ -268,15 +396,23 @@ int (rtb_vfs_link)(struct dentry *old_dentry, struct inode *dir, struct dentry *
 		int ret;
 		char *oldabspath = NULL;
 		char *newabspath = NULL;
+        PMONITOR_FILE_ENTRY pmfe = NULL;
+        int ineedtolog = 0;
+        ULONGLONG ullseqno = 0;
+        ULONGLONG ullGlobalSeqno = 0;
+        ULONG timesec = 0;  
+        char *iologdir = NULL;
 		oldabspath = kmalloc(PATH_MAX, GFP_KERNEL);
 		newabspath = kmalloc(PATH_MAX, GFP_KERNEL);
-		if(oldabspath == NULL || newabspath == NULL)
+        iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
+		if(oldabspath == NULL || newabspath == NULL || iologdir == NULL)
 		{
 			printk("vfs_link.....malloc error\n");
 			goto out;
 		}
 		memset(oldabspath,0,PATH_MAX);
 		memset(newabspath,0,PATH_MAX);
+        memset(iologdir,0,PATH_MAX);
 		if(dir)
 		{
 			printk("vfs_link.....\n");
@@ -285,14 +421,27 @@ int (rtb_vfs_link)(struct dentry *old_dentry, struct inode *dir, struct dentry *
 		getabsfullpathfromdentry(new_dentry,newabspath);
 
 		printk("create hardlink from %s to %s\n",oldabspath,newabspath);
+
+        pmfe = GetMonitorFileEntryByabspath(newabspath);
+        if(pmfe != NULL)
+        {
+            ineedtolog = 1;
+            GetMonitorFileSeqNoByMonitorFileEntry(pmfe, &ullseqno, &ullGlobalSeqno, &timesec,iologdir);
+            printk("RTB: hardlink seq: %lld. gseq: %lld. time: %lld.\n",ullseqno,ullGlobalSeqno,timesec);         
+            
+        }
 	out:
 		ret = run(old_dentry,dir,new_dentry);
-		if(ret == 0 && checkneedtolog(newabspath))
-			createiologforcreatelink(getseqno(),newabspath,oldabspath);
+		if(ret == 0 && ineedtolog)
+			createiologforcreatelink(ullseqno,ullGlobalSeqno,timesec,iologdir,newabspath,oldabspath);
+        else if(ineedtolog)
+            createiologforerror(ullseqno,ullGlobalSeqno,timesec,iologdir,newabspath);
 		if(oldabspath)
 			kfree(oldabspath);
 		if(newabspath)
 			kfree(newabspath);
+        if(iologdir)
+            kfree(iologdir);
 		return ret;  
 
 
@@ -304,13 +453,22 @@ int (rtb_vfs_mkdir)(struct inode *dir, struct dentry *dentry, int mode)
     int(*run)(struct inode *,struct dentry *, int) = sym_vfs_mkdir.run;
 	int ret;
     char *abspath = NULL;
+    PMONITOR_FILE_ENTRY pmfe = NULL;
+    int ineedtolog = 0;
+    ULONGLONG ullseqno = 0;
+    ULONGLONG ullGlobalSeqno = 0;
+    ULONG timesec = 0;   
+    char *iologdir  = NULL;
+    iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
-	if(abspath == NULL)
+	if(abspath == NULL || iologdir == NULL)
 	{
 		printk("vfs_mkdir.....malloc error\n");
-        return run(dir,dentry,mode);
+        ret = run(dir,dentry,mode);
+        goto out;
 	}
 	memset(abspath,0,PATH_MAX);
+    memset(iologdir,0,PATH_MAX);
     if(dir)
     {
         printk("vfs_mkdir.....\n");
@@ -320,13 +478,28 @@ int (rtb_vfs_mkdir)(struct inode *dir, struct dentry *dentry, int mode)
     printk("dentry->dparent  %s.\n",dentry->d_parent->d_name.name);
     getabsfullpathfromdentry(dentry,abspath);		
 	printk("vfs_mkdir %s.\n",abspath);
+
+    pmfe = GetMonitorFileEntryByabspath(abspath);
+    if(pmfe != NULL)
+    {
+        ineedtolog = 1;
+        GetMonitorFileSeqNoByMonitorFileEntry(pmfe, &ullseqno, &ullGlobalSeqno, &timesec,iologdir);
+        printk("RTB: mkdir seq: %lld. gseq: %lld. time: %lld.\n",ullseqno,ullGlobalSeqno,timesec);   
+        
+    }
+
+    
     ret = run(dir,dentry,mode);
 	printk("vfs_mkdir return %d.\n",ret);
-	if(ret == 0 && checkneedtolog(abspath))
-		createiologformkdir(getseqno(),abspath, mode);
+	if(ret == 0 && ineedtolog)
+		createiologformkdir(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath, mode);
+    else if(ineedtolog)
+        createiologforerror(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath);
 out:
 	if(abspath)
         kfree(abspath);
+    if(iologdir)
+        kfree(iologdir);
     return ret;   
 }
 
@@ -338,6 +511,7 @@ long (rtb_sys_write)(unsigned int fd, const char __user *buf, size_t count)
 	loff_t offset = 0;
 	struct task_struct *pcurrent = NULL;
 	char *abspath = NULL;
+    
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
 	if(abspath == NULL)
 	{
@@ -368,38 +542,45 @@ ssize_t (rtb_vfs_write)(struct file *file, const char __user *buf, size_t count,
 	ssize_t ret;
 	int iret = 0;
     char *abspath = NULL;
-	
-
+	PMONITOR_FILE_ENTRY pmfe = NULL;
+    int ineedtolog = 0;
+    ULONGLONG ullseqno = 0;
+    ULONGLONG ullGlobalSeqno = 0;
+    ULONG timesec = 0;  
+    char *iologdir = NULL;
 	if(file->f_flags == 1)
 		return run(file,buf,count,pos);
 	
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
-	if(abspath == NULL)
+    iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
+	if(abspath == NULL || iologdir == NULL)
 	{
 		return run(file,buf,count,pos);
 	}
 	memset(abspath,0,PATH_MAX);
-
+    memset(iologdir,0,PATH_MAX);
 	iret = getabsfullpathfromstructfile(file,abspath);
 
-	if(strncmp(abspath,"/var/log/messages",strlen("/var/log/messages")) != 0 && \
-			strncmp(abspath,"/ptmx",strlen("/ptmx")) != 0 && \
-						strncmp(abspath,"/",strlen("/")) == 0 &&\
-						strncmp(abspath,"/dev",strlen("/dev")) != 0
-			)
-		{
-			printk("vfs_write file %s. count is %zu, offset is %lld. f_flags %d\n",abspath,count,*pos,file->f_flags);
-    }
+     pmfe = GetMonitorFileEntryByabspath(abspath);
+    if(pmfe != NULL)
+    {
+        ineedtolog = 1;
+        GetMonitorFileSeqNoByMonitorFileEntry(pmfe, &ullseqno, &ullGlobalSeqno, &timesec,iologdir);
+        printk("RTB: write seq: %lld. gseq: %lld. time: %lld.\n",ullseqno,ullGlobalSeqno,timesec);     
+        printk("vfs_write file %s. count is %zu, offset is %lld. f_flags %d\n",abspath,count,*pos,file->f_flags);
+    }    
 
-	if(checkneedtolog(abspath))
-		createiologforwrite(getseqno(),abspath,buf,count,pos);
 	ret = run(file,buf,count,pos);
-//	if(ret > 0 && checkneedtolog(abspath))
-//		createiologforwrite(getseqno(),abspath,buf,count,pos);
+	if(ret > 0 && ineedtolog)
+		createiologforwrite(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath,buf,count,pos);
+    else if(ineedtolog)
+        createiologforerror(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath);
 	
  out:  
  	if(abspath)
 		kfree(abspath);
+    if(iologdir)
+        kfree(iologdir);
 
     return ret;
 }
@@ -418,7 +599,7 @@ struct symhook {
 struct symhook security2hook[] = {
 	//{"sys_write", &sym_sys_write,(unsigned long *)rtb_sys_write},
 	//{"vfs_write", &sym_do_truncate,(unsigned long *)rtb_do_truncate},
-    //{"vfs_write", &sym_vfs_write,(unsigned long *)rtb_vfs_write},
+    {"vfs_write", &sym_vfs_write,(unsigned long *)rtb_vfs_write},
     {"vfs_mkdir", &sym_vfs_mkdir, (unsigned long *)rtb_vfs_mkdir},
     {"vfs_rmdir", &sym_vfs_rmdir, (unsigned long *)rtb_vfs_rmdir},
     {"vfs_rename", &sym_vfs_rename, (unsigned long *)rtb_vfs_rename},

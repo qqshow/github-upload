@@ -4,7 +4,8 @@
 
 #define NTSTATUS int
 
- 
+
+int checkneedtolog(char *path);
 int InitMonitorSet(void);
 
  
@@ -23,7 +24,7 @@ PMONITOR_SET_ENTRY GetMonitorSetEntry(
 						GUID guidSet
 						);
 
-int checkneedtolog(char *abspath);
+PMONITOR_FILE_ENTRY GetMonitorFileEntryByabspath(char *abspath);
  
 int AddMonitorSet(MONITOR_SET_ENTRY *pSet,BOOL bDelExist);
 
@@ -41,6 +42,10 @@ int ConfigDelMonitorItem(PFILEREPL_NOTIFICATION pfn);
 
 int ConfigDelAllMonitorSet();
 
+int GetMonitorFileSeqNoByMonitorFileEntry(PMONITOR_FILE_ENTRY pmfe,
+						ULONGLONG* pullSeqNo,  ULONGLONG* pullSetSeqNo ,ULONGLONG *timesecs,char *iologdir);
+
 int SaveConfig();
 
 int LoadConfig();
+

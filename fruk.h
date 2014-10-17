@@ -98,6 +98,7 @@ typedef struct _FILEREPL_REPLY
 #define LOG_FILE_TYPE_MOVEIN        7  //监控外到监控内
 #define LOG_FILE_TYPE_HARDLINK      8  // 创建硬链接
 #define LOG_FILE_TYPE_SOFTLINK	    9  // 创建软链接
+#define LOG_FILE_TYPE_ERROR         10 // 失败
 
 //
 // IO日志文件头，该头结构固定长度LOG_FILE_HEADER_SIZE字节，头结构后是IO的文件数据

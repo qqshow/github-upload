@@ -18,7 +18,6 @@ struct file* file_open(const char* path, int flags, int rights)
     set_fs(oldfs);
     if(IS_ERR(filp)) {
     	err = PTR_ERR(filp);
-    	return NULL;
     }
     return filp;
 }

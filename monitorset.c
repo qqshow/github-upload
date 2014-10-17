@@ -17,6 +17,16 @@ void EntryFree(struct kmem_cache * pmemcache, void *p)
 	
 }
 
+int checkneedtolog(char *path)
+{
+    PMONITOR_FILE_ENTRY pmfe = NULL;
+	pmfe = mi_search(&FileReplData.Config.MonitorFiles.RBTree,path);
+	if(pmfe)
+		return 1;
+	else
+		return 0;
+}
+
  PMONITOR_SET_ENTRY MonitorSetEntryAlloc(void)
  {	 
  	 PMONITOR_SET_ENTRY pmse = NULL;
@@ -395,7 +405,7 @@ int ConfigAddMonitorSet(PFILEREPL_NOTIFICATION pfn,
 	
 	
 
-    strncat(mse.wcsSetCacheDir,pBackupData->wszBakCacheDir, strlen(mse.wcsSetCacheDir));
+    strncat(mse.wcsSetCacheDir,pBackupData->wszBakCacheDir, strlen(pBackupData->wszBakCacheDir));
 
     status = AddMonitorSet(&mse,bDelExistSet);
     if (0 != (status))
@@ -625,15 +635,16 @@ int DelMonitorSet(MONITOR_SET_ENTRY *pSet,BOOL bNeedSync)
 
 
 
-// check need to log or not
-int checkneedtolog(char *abspath)
+
+// get monitor file entry by abspath
+PMONITOR_FILE_ENTRY GetMonitorFileEntryByabspath(char *abspath)
 {
 	PMONITOR_FILE_ENTRY pmfe = NULL;
 	pmfe = mi_search(&FileReplData.Config.MonitorFiles.RBTree,abspath);
 	if(pmfe)
-		return 1;
+		return pmfe;
 	else
-		return 0;
+		return NULL;
 //	if(strncmp(abspath,"/test/",strlen("/test/")) == 0 )
 //		return 1;
 //	else
@@ -708,6 +719,51 @@ UninitMonitorSet(void)
 }
 
 
+
+
+int GetMonitorFileSeqNoByMonitorFileEntry(PMONITOR_FILE_ENTRY pmfe,
+						ULONGLONG* pullSeqNo,  ULONGLONG* pullGlocalSetSeqNo ,ULONGLONG *timesecs,char *iologdir)
+{
+    int  status = 0;
+	PMONITOR_SET_ENTRY pmse = NULL;
+    struct timespec ts;
+    
+    if( pmfe == NULL
+		|| pullSeqNo == NULL
+		|| pullGlocalSetSeqNo == NULL)
+    {
+        return -1;
+    }
+
+    //WaitWriteForMonitor();
+
+
+    pmse = pmfe->pSetEntry;
+    if (pmse == NULL)
+    {
+            pmfe->pSetEntry= pmse = GetMonitorSetEntry(pmfe->hdr.guidSetId);
+            if (pmse == NULL)
+            {
+                status = -3;
+                return status;
+            }
+    }
+    
+    ts = current_kernel_time();
+    
+    *timesecs = ts.tv_sec;
+    *pullSeqNo = pmfe->ullSeqNo;
+    pmfe->ullSeqNo++;
+
+    *pullGlocalSetSeqNo = pmse->ullSetSeqNo;
+    pmse->ullSetSeqNo++;
+    printk("RTB: wcsSetCacheDir %s.\n",pmfe->pSetEntry->wcsSetCacheDir);
+    strncpy(iologdir,pmfe->pSetEntry->wcsSetCacheDir,strlen(pmfe->pSetEntry->wcsSetCacheDir));
+    printk("RTB: iologdir %s.\n",iologdir);
+    return status;
+}
+
+
 /*****************************************************************************
  * Function      : LoadConfig
  * Description   : load config 
@@ -737,7 +793,7 @@ int LoadConfig()
     cfh_size = sizeof(CONFIG_FILE_HEADER);
 	memset(&cfh,0,cfh_size);
 
-    filep = file_open("/etc/rtb.cnf",O_RDONLY, 777);
+    filep = file_open("/etc/rtb.cnf",O_RDONLY | O_CREAT, 777);
 	if (IS_ERR(filep))
 	{
         printk("RTB: open config file error\n");
