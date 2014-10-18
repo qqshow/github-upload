@@ -17,6 +17,7 @@
 
 *************************************************************************************************************/
 #include "AnalysisIolog.h"
+//#include "../fruk.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -79,8 +80,9 @@ int dump(LOG_FILE *iologfile)
 			break;
 		case LOG_FILE_TYPE_WRITE:
 			printf(GREEN"%lld\n", iologfile->hdr.ullSeqNo);
-			printf(GREEN"Write %s > count %d. offset %lld\n",iologfile->hdr.wszFilePath,\
-				iologfile->hdr.write.Length,iologfile->hdr.write.ByteOffset.LowPart);
+            printf(GREEN"%lld\n", iologfile->hdr.liSystemTime.QuadPart);
+			printf(GREEN"Write %s > count %d. offset %lld\n ",iologfile->hdr.wszFilePath,\
+				iologfile->hdr.write.Length,iologfile->hdr.write.ByteOffset);
 			break;
 		case LOG_FILE_TYPE_STOP_INIT:
 			printf(BROWN"%lld\n", iologfile->hdr.ullSeqNo);

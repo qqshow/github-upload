@@ -544,6 +544,7 @@ ssize_t (rtb_vfs_write)(struct file *file, const char __user *buf, size_t count,
     char *abspath = NULL;
 	PMONITOR_FILE_ENTRY pmfe = NULL;
     int ineedtolog = 0;
+    loff_t offset = *pos;
     ULONGLONG ullseqno = 0;
     ULONGLONG ullGlobalSeqno = 0;
     ULONG timesec = 0;  
@@ -572,7 +573,7 @@ ssize_t (rtb_vfs_write)(struct file *file, const char __user *buf, size_t count,
 
 	ret = run(file,buf,count,pos);
 	if(ret > 0 && ineedtolog)
-		createiologforwrite(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath,buf,count,pos);
+		createiologforwrite(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath,buf,count,&offset);
     else if(ineedtolog)
         createiologforerror(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath);
 	

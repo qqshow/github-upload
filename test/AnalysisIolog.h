@@ -31,6 +31,28 @@
 #endif
 
 
+
+#pragma pack(1)
+
+//
+//  Name of port used to communicate
+//
+
+#define FileReplPortName L"\\FileReplPort"
+
+#ifndef MAX_PATH
+#if defined(__linux__)
+#define MAX_PATH	260
+#else
+#define MAX_PATH	260
+#endif
+
+#endif
+
+#define MIN_SECTOR_SIZE         	512
+#define FILEREPL_READ_BUFFER_SIZE   1024*8      //不能小于1024*8
+#define FILEREPL_MAX_PATH       	MAX_PATH
+
 // #define LOG_FILE_TMP_EXT            L"TMP"
 #define LOG_FILE_EXT                L"LOG"
 
@@ -43,9 +65,8 @@
 #define LOG_FILE_TYPE_DELETEFILE    5  // 删除文件
 #define LOG_FILE_TYPE_RENAMEFILE    6  // 文件改名
 #define LOG_FILE_TYPE_MOVEIN        7  //监控外到监控内
-#define LOG_FILE_TYPE_HARDLINK      8  // 创建硬链接
+#define LOG_FILE_TYPE_HARDLINK      8  // 创建
 #define LOG_FILE_TYPE_SOFTLINK	    9  // 创建软链接
-#define LOG_FILE_TYPE_ERROR         10 // 失败
 
 //
 // IO日志文件头，该头结构固定长度LOG_FILE_HEADER_SIZE字节，头结构后是IO的文件数据
@@ -54,7 +75,6 @@ typedef struct _LOG_HEAD_ENDOFFILE_
 {
     LARGE_INTEGER EndOfFile;   
 }LOG_HEAD_ENDOFFILE;
-#define FILEREPL_MAX_PATH 260
 
 typedef struct _LOG_FILE_HEADER_
 {
@@ -94,47 +114,5 @@ typedef struct _LOG_FILE_
 
 } LOG_FILE, *PLOG_FILE;
 
-
-
-
-
-
-
-
-
-
-
-#define DEFAULT_CONFIG_FILE_HEADER_SIZE FILEREPL_READ_BUFFER_SIZE
-typedef struct _CONFIG_FILE_HEADER_
-{
-    ULONG       ulHeaderSize;       //配置文件头的大小，固定为FILEREPL_READ_BUFFER_SIZE
-
-    ULONG       ulOffsetSet;        //备份集在配置文件中的偏移
-    ULONG       ulSizeSet;          //备份集在配置文件中的大小
-
-    ULONG       ulOffsetFiles;        //文件项在配置文件中的偏移
-    ULONG       ulSizeFiles;          //文件项在配置文件中的大小
-
-	ULONG		ulLastShutdownStatus; //系统上次关机状态
-
-//////////////////////////////////////////////////////////////////////////
-    //ULONG       ulOffsetDirs;        //目录项在配置文件中的偏移
-    //ULONG       ulSizeDirs;          //目录项在配置文件中的大小
-//////////////////////////////////////////////////////////////////////////
-
-}CONFIG_FILE_HEADER,*PCONFIG_FILE_HEADER;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#pragma pack()
 
