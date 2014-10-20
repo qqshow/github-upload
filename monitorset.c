@@ -391,6 +391,8 @@ int ConfigAddMonitorSet(PFILEREPL_NOTIFICATION pfn,
     MONITOR_SET_ENTRY   mse;
     MONITOR_FILE_ENTRY  mfe;
 	PMONITOR_SET_ENTRY pmse = NULL;
+    memset(&mse,0,sizeof(MONITOR_SET_ENTRY));
+    memset(&mfe,0,sizeof(MONITOR_FILE_ENTRY));
 	printk("ConfigAddMonitorSet bDelExisSet %d.\n");
     if(pfn == NULL)
     {

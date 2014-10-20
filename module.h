@@ -43,6 +43,7 @@
 
 #include <asm/uaccess.h>
 #include <asm/insn.h>
+#include <linux/types.h>
 
 #ifndef CONFIG_SECURITY
 #error "This module requires CONFIG_SECURITY to be enabled"
@@ -50,15 +51,15 @@
 
 
 #if defined(__linux__)
-    #define ULONG unsigned long
-    #define ULONGLONG unsigned long long
-	#define ulonglong unsigned long long
-    #define WCHAR char
+    #define ULONG uint32_t
+    #define ULONGLONG uint64_t
+	#define ulonglong uint64_t
+    #define WCHAR char 
 
     typedef struct _GUID {
-        unsigned long  Data1;
-        unsigned short Data2;
-        unsigned short Data3;
+        uint32_t  Data1;
+        uint16_t Data2;
+        uint16_t Data3;
         unsigned char  Data4[ 8 ];
     } GUID;
 
@@ -67,15 +68,15 @@
     #else // MIDL_PASS
     typedef union _LARGE_INTEGER {
         struct {
-            unsigned long LowPart;
-            unsigned long HighPart;
+            uint32_t LowPart;
+            uint32_t HighPart;
         };
         struct {
-            unsigned long LowPart;
-            unsigned long HighPart;
+            uint32_t LowPart;
+            uint32_t HighPart;
         } u;
     #endif //MIDL_PASS
-        unsigned long long QuadPart;
+        uint64_t QuadPart;
     } LARGE_INTEGER;
 #endif
 
