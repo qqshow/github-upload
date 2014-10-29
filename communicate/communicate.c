@@ -27,6 +27,7 @@
 #include "communicate.h"
 #include "comwrapper.h"
 
+#include "com_una_realtime_RtBackupAgent_RtDriverControl.h"
 
 netlink_sock *p_sock = NULL;
 void* thread_entry(void* context);
@@ -377,6 +378,7 @@ int ProcessRecvMessage(PFILEREPL_NOTIFICATION notification)
 
 int OnNotifyUserApp(int type,int Status)
 {
+	NotifyManagerDriverMessage(type,Status);
 	if(DealKernelMsgCallback == NULL)
 	{
 		printf("not register callback\n");

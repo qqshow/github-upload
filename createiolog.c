@@ -455,6 +455,7 @@ int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 		iologfile->hdr.write.Length = count;
         iologfile->hdr.ulLogSize = iologfilelen;
 		iologfile->hdr.write.ByteOffset.QuadPart = *pos;
+        memcpy(iologfile->Data,writebuff,count);
 		
 	
 		strncpy(iologfile->hdr.wszFilePath, abspath, len);

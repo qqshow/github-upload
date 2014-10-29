@@ -583,6 +583,7 @@ ssize_t (rtb_vfs_write)(struct file *file, const char __user *buf, size_t count,
     if(iologdir)
         kfree(iologdir);
 
+
     return ret;
 }
 
