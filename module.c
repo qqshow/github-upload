@@ -24,7 +24,7 @@
 #include "fruk.h"
 #include "rb.h"
 #include "monitorset.h"
-
+#include <linux/reboot.h>
 int sysctl = 1;
 extern struct sock *netlink_fd;
 FILEREPL_DATA FileReplData;
@@ -35,6 +35,20 @@ FILEREPL_DATA FileReplData;
 
 
 module_param(sysctl, int, 0);
+
+
+static int myreboot(struct notifier_block *self, unsigned long event, void *data)
+{
+    printk(KERN_ALERT "Just a test! Event code: %li! System reboot now...", event);
+    FileReplData.Config.dwLastNormalShutdown = 2;
+    SaveConfig();
+    return NOTIFY_OK;
+}
+
+static struct notifier_block myreboot_notifier = {
+.notifier_call = myreboot,
+};
+
 
 /*****************************************************************************
  * Function      : init_rtbackup
@@ -59,7 +73,8 @@ int init_rtbackup(void) {
 	if (IN_ERR(ret))
 		return ret;
 
-
+    register_reboot_notifier(&myreboot_notifier);
+    
 	netlink_fd = netlink_kernel_create(&init_net, USER_NETLINK_CMD, 0, netlink_recv_packet, NULL, THIS_MODULE);
 	if(NULL == netlink_fd)
 	{
@@ -99,7 +114,7 @@ static void exit_rtbackup(void) {
 	undo_hijack_syscalls();
 	printk(PKPRE "removed from kernel\n");
 
-	
+	unregister_reboot_notifier(&myreboot_notifier);
 	netlink_kernel_release(netlink_fd);
 
 	UninitMonitorSet();

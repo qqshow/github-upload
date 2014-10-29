@@ -44,6 +44,7 @@
 #include <asm/uaccess.h>
 #include <asm/insn.h>
 #include <linux/types.h>
+#include <linux/notifier.h>
 
 #ifndef CONFIG_SECURITY
 #error "This module requires CONFIG_SECURITY to be enabled"

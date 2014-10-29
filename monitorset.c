@@ -708,7 +708,7 @@ UninitMonitorSet(void)
 
 	printk("UninitMonitorSet\n");
 	DumpAllMonitorSet();
-	DelAllMonitorSet();
+	ConfigDelAllMonitorSet();
 	DumpAllMonitorSet();
 		//ExDeleteNPagedLookasideList(&FileReplData.Config.MonitorSet.ItemLookAsideList);
 
@@ -955,8 +955,10 @@ int SaveConfig()
     }
 
 out:
-    if(filep)
+
+    if(!IS_ERR(filep))
         file_close(filep);
+
     return ret;
 	
 	
