@@ -24,17 +24,17 @@
 #include "fruk.h"
 #include "rb.h"
 #include "monitorset.h"
+#include "iowritethread.h"
 #include <linux/reboot.h>
 int sysctl = 1;
 extern struct sock *netlink_fd;
 FILEREPL_DATA FileReplData;
 
-
-
-
+static struct task_struct * _tsk;
 
 
 module_param(sysctl, int, 0);
+
 
 
 static int myreboot(struct notifier_block *self, unsigned long event, void *data)
@@ -67,12 +67,13 @@ int init_rtbackup(void) {
 
 	int ret;
 
-	// get some kernel function address
+	// get needed kernel function address
 	ret = kernfunc_init();
 
 	if (IN_ERR(ret))
 		return ret;
 
+    //register reboot and shutdown notifier
     register_reboot_notifier(&myreboot_notifier);
     
 	netlink_fd = netlink_kernel_create(&init_net, USER_NETLINK_CMD, 0, netlink_recv_packet, NULL, THIS_MODULE);
@@ -83,12 +84,29 @@ int init_rtbackup(void) {
 	}
 	printk(KERN_ALERT "Init netlink success!\n");
 
+    // load needed monitor set and files
 	ret = InitMonitorSet();
 	if (IN_ERR(ret))
 	{
 		printk("initmonitorset error.\n");
 		return ret;
 	}	
+
+    //create io write thread
+    initcompletion();
+
+    _tsk = kthread_run(thread_iowrite, NULL, "thread_iowrite"); 
+
+    if (IS_ERR(_tsk)) 
+    {
+        printk(KERN_INFO "create iowrite thread error!\n"); 
+        return -2;
+    }     
+    else
+    {
+        printk(KERN_INFO "create iowrite thread ok!\n");  
+    }   
+
 
     //hijack vfs function
 	hijack_syscalls();
@@ -117,8 +135,16 @@ static void exit_rtbackup(void) {
 	unregister_reboot_notifier(&myreboot_notifier);
 	netlink_kernel_release(netlink_fd);
 
+    if (!IS_ERR(_tsk))
+    {  
+        ret = kthread_stop(_tsk);  
+
+        printk(KERN_INFO "First thread function has stopped ,return %d\n", ret);
+    }  
+    
 	UninitMonitorSet();
 	printk(KERN_ALERT "Exit netlink!\n");
+
 	return;
 }
 

@@ -40,6 +40,9 @@
 #include <linux/slab.h>
 #include <linux/rbtree.h>
 #include <linux/time.h>
+#include <linux/completion.h>
+#include <linux/spinlock.h>
+
 
 #include <asm/uaccess.h>
 #include <asm/insn.h>

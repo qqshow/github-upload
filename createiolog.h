@@ -35,7 +35,7 @@
 
 #include "module.h"
 #include "fileop.h"
-
+#include "fruk.h"
 
 
 ulonglong getseqno(void);
@@ -58,5 +58,6 @@ int createiologforcreatelink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulong
 int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *abspath,char *writebuff, size_t count, loff_t *pos);
 
 int createiologforerror(ulonglong ullSeqNo,ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir, char *abspath);
+int createiolog(char *iologpath, PLOG_FILE iologfile, int iologfilesize);
 #endif
 

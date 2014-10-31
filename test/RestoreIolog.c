@@ -69,8 +69,9 @@ dir_parent(char *p,char *parentdir)
         strcpy(parentdir,p);
         return 0;
 	}
-
-    copy = malloc(strlen(p));
+    printf("dir_parent %s. len is %d.\n",p,strlen(p));
+    copy = malloc(strlen(p) + 1);
+    copy[strlen(p)] = '\0';
 	strncpy(copy,p,strlen(p));
 	n = strrchr(copy, '/');
 	if (n) {
@@ -101,6 +102,7 @@ mkdir_p(char * path)
     if (NULL == (ptr = malloc(len + 2))) {
         return (-1);
     }
+    memset(ptr,0,len + 2);
     strcpy(ptr, path);
 
     /* 
@@ -168,14 +170,25 @@ int restore(LOG_FILE *iologfile,char *targetdir)
 		case LOG_FILE_TYPE_NEWFILE:
 			printf(PURPLE"%lld\n", iologfile->hdr.ullSeqNo);
 			printf(PURPLE"CREATE NEW FILE %s > \n",iologfile->hdr.wszFilePath);
-            char *dirparent = malloc(1024);
-            dir_parent(targetpath, dirparent);
-            mkdir_p(dirparent);
-            if(dirparent)
-                free(dirparent);
-            fhandle= open(targetpath, O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
-            if(fhandle)
-                close(fhandle);
+            if(iologfile->hdr.bIsDir)
+            {
+                printf(PURPLE"mkdir %s > \n",targetpath);
+                mkdir_p(targetpath);
+            }
+            else
+            {              
+                char *dirparent = malloc(1024);
+                memset(dirparent,0,1024);
+                dir_parent(targetpath, dirparent);
+                printf(PURPLE"create dir parent %s > \n",dirparent);
+                mkdir_p(dirparent);
+                if(dirparent)
+                    free(dirparent);
+                printf(PURPLE"create file %s > \n",targetpath);
+                fhandle= open(targetpath, O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+                if(fhandle)
+                    close(fhandle);
+            }
 			break;
 		case LOG_FILE_TYPE_RENAMEFILE:
 			printf(YELLOW"%lld\n", iologfile->hdr.ullSeqNo);

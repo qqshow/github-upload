@@ -263,7 +263,7 @@ int DumpAllMonitorSet()
         return -1;
     }
 
-	//源文件路径至少也要有c:\x，所以至少要4个字符以上，并且第2字符必须是:
+
 	if(strlen(pmfe->wcsMonitorFile) < 2 || pmfe->wcsMonitorFile[0] != '/')
 	{
 		printk("AddMonitorItem.STATUS_INVALID_PARAMETER pmfe->wcsMonitorFile = %s", pmfe->wcsMonitorFile);
@@ -692,6 +692,11 @@ int  InitMonitorSet(void)
 		FileReplData.Config.MonitorSet.RBTree = RB_ROOT;
 		FileReplData.Config.MonitorFiles.RBTree = RB_ROOT;
 
+        spin_lock_init(&FileReplData.Config.iowritequeuelock);
+
+        // init iowrite queue
+        INIT_LIST_HEAD(&FileReplData.Config.iowritequeue);
+
 
 	    LoadConfig();
 	return status;
@@ -758,10 +763,11 @@ int GetMonitorFileSeqNoByMonitorFileEntry(PMONITOR_FILE_ENTRY pmfe,
     pmfe->ullSeqNo++;
 
     *pullGlocalSetSeqNo = pmse->ullSetSeqNo;
+    printk("RTB: testSeqNo %d.\n",*pullGlocalSetSeqNo);
     pmse->ullSetSeqNo++;
-    printk("RTB: wcsSetCacheDir %s.\n",pmfe->pSetEntry->wcsSetCacheDir);
+    //printk("RTB: wcsSetCacheDir %s.\n",pmfe->pSetEntry->wcsSetCacheDir);
     strncpy(iologdir,pmfe->pSetEntry->wcsSetCacheDir,strlen(pmfe->pSetEntry->wcsSetCacheDir));
-    printk("RTB: iologdir %s.\n",iologdir);
+    //printk("RTB: iologdir %s.\n",iologdir);
     return status;
 }
 
@@ -795,7 +801,7 @@ int LoadConfig()
     cfh_size = sizeof(CONFIG_FILE_HEADER);
 	memset(&cfh,0,cfh_size);
 
-    filep = file_open("/etc/rtb.cnf",O_RDONLY | O_CREAT, 777);
+    filep = file_open("/etc/rtb.cnf",O_RDONLY | O_CREAT, S_IRUSR | S_IWUSR);
 	if (IS_ERR(filep))
 	{
         printk("RTB: open config file error\n");
@@ -899,7 +905,7 @@ int SaveConfig()
 	cfh.ulLastShutdownStatus = FileReplData.Config.dwLastNormalShutdown;
     cfh.ulHeaderSize = cfh_size;
 
-    filep = file_open("/etc/rtb.cnf",O_WRONLY | O_CREAT, 777);
+    filep = file_open("/etc/rtb.cnf",O_WRONLY, 0);
 	if (IS_ERR(filep))
 	{
         printk("RTB: open config file error\n");

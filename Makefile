@@ -16,7 +16,8 @@ MODULE_SOURCES := \
     fileop.c \
     createiolog.c \
     rtbnetlink.c \
-    rb.c
+    rb.c \
+    iowritethread.c
 KBUILD_DIR=$(shell sh ./scripts/find_kernel_src.sh)
 UNAME=$(shell uname -r)
 PWD := $(shell pwd)
@@ -51,5 +52,6 @@ $(MODULE_NAME)-y := \
     fileop.o \
     createiolog.o \
     rtbnetlink.o \
-    rb.o
+    rb.o \
+    iowritethread.o
 endif

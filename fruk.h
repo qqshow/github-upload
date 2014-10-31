@@ -232,6 +232,8 @@ typedef struct _FILEREPL_CONFIG
 	ULONG					dwLastNormalShutdown; //标志系统上次关机状态
 
     BOOL                    bDirty;             //用于定时保存配置数据时判断配置数据是否改变
+    struct list_head        iowritequeue;       //异步io日志写队列
+    spinlock_t              iowritequeuelock;
     
 } FILEREPL_CONFIG, *PFILEREPL_CONFIG;
 
@@ -296,6 +298,12 @@ extern FILEREPL_DATA FileReplData;
 
 
 
+typedef struct _IOWRITE_CONTEXT_
+{
+    struct list_head entry;
+    char *iologpath;
+    PLOG_FILE logfile;
+} IOWRITE_CONTEXT, *PIOWRITE_CONTEXT;
 
 
 

@@ -18,6 +18,10 @@
 *************************************************************************************************************/
 #include "createiolog.h"
 #include "fruk.h"
+#include "iowritethread.h"
+
+
+#define ASYNC_IOWRITE
 
 
 ulonglong gseqno = 0;
@@ -36,6 +40,7 @@ int createiolog(char *iologpath, PLOG_FILE iologfile, int iologfilesize)
 	int ret = -1;
 	struct file *filep = NULL;
 	//filep = file_open(iologpath, O_WRONLY | O_CREAT, 777);     
+	printk("RTB: createiolog %s.\n",iologpath);
 	filep = file_open(iologpath,O_WRONLY | O_CREAT,777);
 	if (IS_ERR(filep))	
 	{
@@ -57,8 +62,9 @@ out:
 int createiologformkdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *abspath,int mode)
 {
 	int iret = -1;
-	char iologpath[NAME_MAX] = {0};
+	char *iologpath = NULL;
 	PLOG_FILE iologfile = NULL;
+    PIOWRITE_CONTEXT piowc = NULL;
 	int len = strlen(abspath);
 	if(len > 260)
 		len = 260;
@@ -81,18 +87,32 @@ int createiologformkdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 	iologfile->hdr.ulLogSize = sizeof(LOG_FILE);
 
 	strncpy(iologfile->hdr.wszFilePath, abspath, len);
-
+    iologpath = kzalloc(NAME_MAX,GFP_KERNEL);
 	snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
 
     printk("RTB: creatiologformkdir iologpath %s. strlen %d.\n",iologpath,strlen(iologpath));
 
-	iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
-	if(iret != 0)
-		printk("create io log error.\n");
+#ifdef ASYNC_IOWRITE
+    piowc = kzalloc(sizeof(IOWRITE_CONTEXT), GFP_KERNEL);
+    piowc->logfile = iologfile;
+    piowc->iologpath = iologpath;
+    spin_lock( &FileReplData.Config.iowritequeuelock);
+    list_add_tail(&piowc->entry,&FileReplData.Config.iowritequeue);
+    spin_unlock( &FileReplData.Config.iowritequeuelock);
+    completecompletion();
+    return 0;
+#else
+    iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
+    if(iret != 0)
+    	printk("create io log error.\n");
+
+#endif
 	
 out:	
 	if(iologfile)
 		kfree(iologfile);
+    if(iologpath)
+        kfree(iologpath);
 
 	
 	return iret;
@@ -102,8 +122,9 @@ int createiologforcreatefile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulong
 {
 
 		int iret = -1;
-		char iologpath[NAME_MAX] = {0};
+		char *iologpath = NULL;
 		PLOG_FILE iologfile = NULL;
+        PIOWRITE_CONTEXT piowc = NULL;
 		int len = strlen(abspath);
 		if(len > 260)
 			len = 260;
@@ -125,16 +146,30 @@ int createiologforcreatefile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulong
 		iologfile->hdr.ulLogSize = sizeof(LOG_FILE);
 	
 		strncpy(iologfile->hdr.wszFilePath, abspath, len);
-	
+	    iologpath = kzalloc(NAME_MAX,GFP_KERNEL);
 		snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
 	
-		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
-		if(iret != 0)
-			printk("create io log error.\n");
+#ifdef ASYNC_IOWRITE
+        piowc = kzalloc(sizeof(IOWRITE_CONTEXT), GFP_KERNEL);
+        piowc->logfile = iologfile;
+        piowc->iologpath = iologpath;
+        spin_lock( &FileReplData.Config.iowritequeuelock);
+        list_add_tail(&piowc->entry,&FileReplData.Config.iowritequeue);
+        spin_unlock( &FileReplData.Config.iowritequeuelock);
+        completecompletion();
+        return 0;
+#else
+        iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
+    	if(iret != 0)
+    		printk("create io log error.\n");
+
+#endif
 		
 	out:	
 		if(iologfile)
 			kfree(iologfile);
+        if(iologpath)
+            kfree(iologpath);
 	
 		
 		return iret;
@@ -146,8 +181,9 @@ int createiologforcreatefile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulong
 int createiologforrmdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs, char *iologdir,char *abspath)
 {
 		int iret = -1;
-		char iologpath[NAME_MAX] = {0};
+		char *iologpath = NULL;
 		PLOG_FILE iologfile = NULL;
+        PIOWRITE_CONTEXT piowc = NULL;
 		int len = strlen(abspath);
 
 
@@ -173,17 +209,32 @@ int createiologforrmdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 		iologfile->hdr.ulLogSize = sizeof(LOG_FILE);
 	
 		strncpy(iologfile->hdr.wszFilePath, abspath, len);
-	
+	    iologpath = kzalloc(NAME_MAX,GFP_KERNEL);
 		snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
 	
-		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
-		if(iret != 0)
-			printk("create io log error.\n");
+#ifdef ASYNC_IOWRITE
+        piowc = kzalloc(sizeof(IOWRITE_CONTEXT), GFP_KERNEL);
+        piowc->logfile = iologfile;
+        piowc->iologpath = iologpath;
+        spin_lock( &FileReplData.Config.iowritequeuelock);
+        list_add_tail(&piowc->entry,&FileReplData.Config.iowritequeue);
+        spin_unlock( &FileReplData.Config.iowritequeuelock);
+        completecompletion();
+        return 0;
+#else
+        iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
+    	if(iret != 0)
+    		printk("create io log error.\n");
+
+#endif
 
 		
 	out:	
 		if(iologfile)
 			kfree(iologfile);
+
+        if(iologpath)
+            kfree(iologpath);
 		
 		return iret;
 
@@ -193,8 +244,9 @@ int createiologforrmdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 int createiologforrmfile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs, char *iologdir,char *abspath)
 {
 		int iret = -1;
-		char iologpath[NAME_MAX] = {0};
+		char *iologpath = NULL;
 		PLOG_FILE iologfile = NULL;
+        PIOWRITE_CONTEXT piowc = NULL;
 		int len = strlen(abspath);
 		
 		if(len > 260)
@@ -217,16 +269,31 @@ int createiologforrmfile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong
 		iologfile->hdr.ulLogSize = sizeof(LOG_FILE);
 	
 		strncpy(iologfile->hdr.wszFilePath, abspath, len);
-	
+	    iologpath = kzalloc(NAME_MAX,GFP_KERNEL);
 		snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
 	
-		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
-		if(iret != 0)
-			printk("create io log error.\n");
+#ifdef ASYNC_IOWRITE
+        piowc = kzalloc(sizeof(IOWRITE_CONTEXT), GFP_KERNEL);
+        piowc->logfile = iologfile;
+        piowc->iologpath = iologpath;
+        spin_lock( &FileReplData.Config.iowritequeuelock);
+        list_add_tail(&piowc->entry,&FileReplData.Config.iowritequeue);
+        spin_unlock( &FileReplData.Config.iowritequeuelock);
+        completecompletion();
+        return 0;
+#else
+        iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
+    	if(iret != 0)
+    		printk("create io log error.\n");
+
+#endif
 		
 	out:	
 		if(iologfile)
 			kfree(iologfile);
+
+        if(iologpath)
+            kfree(iologpath);
 		
 		return iret;
 
@@ -237,8 +304,9 @@ int createiologforrmfile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong
 int createiologforerror(ulonglong ullSeqNo,ulonglong ullGlobalSeqNo, ulonglong timesecs, char *iologdir,char *abspath)
 {
     	int iret = -1;
-		char iologpath[NAME_MAX] = {0};
+		char *iologpath= NULL;
 		PLOG_FILE iologfile = NULL;
+        PIOWRITE_CONTEXT piowc = NULL;
 		int len = strlen(abspath);
 		if(len > 260)
 			len = 260;
@@ -260,16 +328,31 @@ int createiologforerror(ulonglong ullSeqNo,ulonglong ullGlobalSeqNo, ulonglong t
 		iologfile->hdr.ulLogSize = sizeof(LOG_FILE);
 	
 		strncpy(iologfile->hdr.wszFilePath, abspath, len);
-	
+	    iologpath = kzalloc(NAME_MAX,GFP_KERNEL);
 		snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
 	
-		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
-		if(iret != 0)
-			printk("create io log error.\n");
+#ifdef ASYNC_IOWRITE
+        piowc = kzalloc(sizeof(IOWRITE_CONTEXT), GFP_KERNEL);
+        piowc->logfile = iologfile;
+        piowc->iologpath = iologpath;
+        spin_lock( &FileReplData.Config.iowritequeuelock);
+        list_add_tail(&piowc->entry,&FileReplData.Config.iowritequeue);
+        spin_unlock( &FileReplData.Config.iowritequeuelock);
+        completecompletion();
+        return 0;
+#else
+        iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
+    	if(iret != 0)
+    		printk("create io log error.\n");
+
+#endif
 		
 	out:	
 		if(iologfile)
 			kfree(iologfile);
+
+        if(iologpath)
+            kfree(iologpath);
 	
 		
 		return iret;
@@ -278,8 +361,9 @@ int createiologforerror(ulonglong ullSeqNo,ulonglong ullGlobalSeqNo, ulonglong t
 int createiologforrename(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *oldabspath, char *newabspath)
 {
 		int iret = -1;
-		char iologpath[NAME_MAX] = {0};
+		char *iologpath = NULL;
 		PLOG_FILE iologfile = NULL;
+        PIOWRITE_CONTEXT piowc = NULL;
 		int oldlen = strlen(oldabspath);
 		int newlen = strlen(newabspath);
 		int iologfilelen = 0;
@@ -308,16 +392,30 @@ int createiologforrename(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong
 	
 		strncpy(iologfile->hdr.wszFilePath, oldabspath, oldlen);
 		strncpy(iologfile->Data, newabspath, newlen);
-	
+	    iologpath = kzalloc(NAME_MAX,GFP_KERNEL);
 		snprintf(iologpath, NAME_MAX, "%s%lld",iologdir,ullSeqNo);
 	
-		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
-		if(iret != 0)
-			printk("create io log error.\n");
+#ifdef ASYNC_IOWRITE
+        piowc = kzalloc(sizeof(IOWRITE_CONTEXT), GFP_KERNEL);
+        piowc->logfile = iologfile;
+        piowc->iologpath = iologpath;
+        spin_lock( &FileReplData.Config.iowritequeuelock);
+        list_add_tail(&piowc->entry,&FileReplData.Config.iowritequeue);
+        spin_unlock( &FileReplData.Config.iowritequeuelock);
+        completecompletion();
+        return 0;
+#else
+        iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
+    	if(iret != 0)
+    		printk("create io log error.\n");
+
+#endif
 		
 	out:	
 		if(iologfile)
 			kfree(iologfile);
+        if(iologpath)
+            kfree(iologpath);
 
 		
 		return iret;
@@ -328,8 +426,9 @@ int createiologforrename(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong
 int createiologforcreatesymlink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong timesecs,char *iologdir,char *symlinkabspath, char *dstabspath)
 {
 	int iret = -1;
-	char iologpath[NAME_MAX] = {0};
+	char *iologpath = NULL;
 	PLOG_FILE iologfile = NULL;
+    PIOWRITE_CONTEXT piowc = NULL;
 	int oldlen = strlen(dstabspath);
 	int newlen = strlen(symlinkabspath);
 	int iologfilelen = 0;
@@ -359,16 +458,30 @@ int createiologforcreatesymlink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ul
 
 	strncpy(iologfile->hdr.wszFilePath, dstabspath, oldlen);
 	strncpy(iologfile->Data, symlinkabspath, newlen);
-
+    iologpath = kzalloc(NAME_MAX,GFP_KERNEL);
 	snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
-
-	iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
+    
+#ifdef ASYNC_IOWRITE
+    piowc = kzalloc(sizeof(IOWRITE_CONTEXT), GFP_KERNEL);
+    piowc->logfile = iologfile;
+    piowc->iologpath = iologpath;
+    spin_lock( &FileReplData.Config.iowritequeuelock);
+    list_add_tail(&piowc->entry,&FileReplData.Config.iowritequeue);
+    spin_unlock( &FileReplData.Config.iowritequeuelock);
+    completecompletion();
+    return 0;
+#else
+    iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 	if(iret != 0)
 		printk("create io log error.\n");
+
+#endif
 	
 out:	
 	if(iologfile)
 		kfree(iologfile);
+    if(iologpath)
+        kfree(iologpath);
 
 	
 	return iret;
@@ -380,7 +493,8 @@ int createiologforcreatelink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulong
     char *linkabspath, char *dstabspath)
 {
 		int iret = -1;
-		char iologpath[NAME_MAX] = {0};
+        PIOWRITE_CONTEXT piowc = NULL;
+		char *iologpath = NULL;
 		PLOG_FILE iologfile = NULL;
 		int oldlen = strlen(dstabspath);
 		int newlen = strlen(linkabspath);
@@ -411,16 +525,30 @@ int createiologforcreatelink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulong
 	
 		strncpy(iologfile->hdr.wszFilePath, dstabspath, oldlen);
 		strncpy(iologfile->Data, linkabspath, newlen);
-	
+	    iologpath = kzalloc(NAME_MAX,GFP_KERNEL);
 		snprintf(iologpath, NAME_MAX, "%s%lld",iologdir,ullSeqNo);
-	
-		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
+#ifdef ASYNC_IOWRITE
+        piowc = kzalloc(sizeof(IOWRITE_CONTEXT), GFP_KERNEL);
+        piowc->logfile = iologfile;
+        piowc->iologpath = iologpath;
+        spin_lock( &FileReplData.Config.iowritequeuelock);
+        list_add_tail(&piowc->entry,&FileReplData.Config.iowritequeue);
+        spin_unlock( &FileReplData.Config.iowritequeuelock);
+        completecompletion();
+        return 0;
+#else
+        iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 		if(iret != 0)
 			printk("create io log error.\n");
+
+#endif
+
 		
 	out:	
 		if(iologfile)
 			kfree(iologfile);
+        if(iologpath)
+            kfree(iologpath);
 	
 		
 		return iret;
@@ -432,8 +560,9 @@ int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 {
 
 		int iret = -1;
-		char iologpath[NAME_MAX] = {0};
+		char *iologpath = NULL;
 		PLOG_FILE iologfile = NULL;
+        PIOWRITE_CONTEXT piowc = NULL;
 		int len = strlen(abspath);
 		int iologfilelen = sizeof(LOG_FILE) + count - 1;
 		if(len > 260)
@@ -457,19 +586,30 @@ int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 		iologfile->hdr.write.ByteOffset.QuadPart = *pos;
         memcpy(iologfile->Data,writebuff,count);
 		
-	
+
 		strncpy(iologfile->hdr.wszFilePath, abspath, len);
-	
+	    iologpath = kzalloc(NAME_MAX,GFP_KERNEL);
 		snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullSeqNo);
-	
+
+#ifdef ASYNC_IOWRITE
+        piowc = kzalloc(sizeof(IOWRITE_CONTEXT), GFP_KERNEL);
+        piowc->logfile = iologfile;
+        piowc->iologpath = iologpath;
+        spin_lock( &FileReplData.Config.iowritequeuelock);
+        list_add_tail(&piowc->entry,&FileReplData.Config.iowritequeue);
+        spin_unlock( &FileReplData.Config.iowritequeuelock);
+        completecompletion();
+        return 0;
+#else
 		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 		if(iret != 0)
 			printk("create io log error.\n");
-		
+#endif		
 	out:	
 		if(iologfile)
 			kfree(iologfile);
-	
+	    if(iologpath)
+            kfree(iologpath);
 		
 		return iret;
 
