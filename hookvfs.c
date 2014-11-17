@@ -101,6 +101,12 @@ int (rtb_vfs_rename)(struct inode *old_dir, struct dentry *old_dentry,
     ULONGLONG ullGlobalSeqno = 0;
     ULONG timesec = 0;
     char *iologdir  = NULL;
+
+    if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
+    {
+        return run(old_dir,old_dentry,new_dir,new_dentry);
+    }
+    
     iologdir = kmalloc(PATH_MAX,GFP_KERNEL);
 	oldabspath = kmalloc(PATH_MAX, GFP_KERNEL);
 	newabspath = kmalloc(PATH_MAX, GFP_KERNEL);
@@ -173,6 +179,12 @@ int (rtb_vfs_unlink)(struct inode *dir, struct dentry *dentry)
     ULONGLONG ullGlobalSeqno = 0;
     ULONG timesec = 0;
     char *iologdir = NULL;
+
+    if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
+    {
+        return run(dir,dentry);
+    }
+    
     iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
 	if(abspath == NULL || iologdir == NULL)
@@ -184,11 +196,11 @@ int (rtb_vfs_unlink)(struct inode *dir, struct dentry *dentry)
     memset(iologdir,0,PATH_MAX);
     if(dir)
     {
-        printk("vfs_unlink.....\n");
+        //printk("vfs_unlink.....\n");
     }
     
     getabsfullpathfromdentry(dentry,abspath);
-	printk("vfs_unlink %s.\n",abspath);
+	//printk("vfs_unlink %s.\n",abspath);
 
     
     pmfe = GetMonitorFileEntryByabspath(abspath);
@@ -227,6 +239,10 @@ int (rtb_vfs_rmdir)(struct inode *dir, struct dentry *dentry)
     ULONGLONG ullseqno = 0;
     ULONGLONG ullGlobalSeqno = 0;
     ULONG timesec = 0;  
+    if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
+    {
+        return run(dir,dentry);
+    }
     iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
 	if(abspath == NULL)
@@ -282,6 +298,11 @@ int (rtb_vfs_create)(struct inode *dir, struct dentry *dentry, int mode,
     ULONGLONG ullseqno = 0;
     ULONGLONG ullGlobalSeqno = 0;
     ULONG timesec = 0;  
+
+    if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
+    {
+        return run(dir,dentry,mode,nd);
+    }
     
 	if(dentry->d_inode != NULL)
 	{
@@ -343,6 +364,12 @@ int (rtb_vfs_symlink)(struct inode *dir, struct dentry *dentry, const char *oldn
         ULONGLONG ullseqno = 0;
         ULONGLONG ullGlobalSeqno = 0;
         ULONG timesec = 0;  
+
+        if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
+        {
+            return run(dir,dentry,oldname);
+        }
+        
         iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
 		oldabspath = kmalloc(PATH_MAX, GFP_KERNEL);
 		newabspath = kmalloc(PATH_MAX, GFP_KERNEL);
@@ -402,6 +429,12 @@ int (rtb_vfs_link)(struct dentry *old_dentry, struct inode *dir, struct dentry *
         ULONGLONG ullGlobalSeqno = 0;
         ULONG timesec = 0;  
         char *iologdir = NULL;
+
+        if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
+        {
+            return run(old_dentry,dir,new_dentry);
+        }
+        
 		oldabspath = kmalloc(PATH_MAX, GFP_KERNEL);
 		newabspath = kmalloc(PATH_MAX, GFP_KERNEL);
         iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
@@ -459,6 +492,12 @@ int (rtb_vfs_mkdir)(struct inode *dir, struct dentry *dentry, int mode)
     ULONGLONG ullGlobalSeqno = 0;
     ULONG timesec = 0;   
     char *iologdir  = NULL;
+
+    if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
+    {
+        return run(dir,dentry,mode);
+    }
+    
     iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
 	if(abspath == NULL || iologdir == NULL)
@@ -511,6 +550,11 @@ long (rtb_sys_write)(unsigned int fd, const char __user *buf, size_t count)
 	loff_t offset = 0;
 	struct task_struct *pcurrent = NULL;
 	char *abspath = NULL;
+
+    if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
+    {
+        return run(fd,buf,count);
+    }
     
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
 	if(abspath == NULL)
@@ -549,6 +593,12 @@ ssize_t (rtb_vfs_write)(struct file *file, const char __user *buf, size_t count,
     ULONGLONG ullGlobalSeqno = 0;
     ULONG timesec = 0;  
     char *iologdir = NULL;
+
+    if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
+    {
+        return run(file,buf,count,pos);
+    }
+    
 	if(file->f_flags == 1)
 		return run(file,buf,count,pos);
 	

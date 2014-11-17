@@ -70,9 +70,9 @@
 #define NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS 12+NOTIFY_TYPE_USER_TO_DRV_START
 
 
-#define FILTER_TYPE_INVALID     0
-#define FILTER_TYPE_FILE        1
-#define FILTER_TYPE_DIR         2
+//#define FILTER_TYPE_INVALID     0
+#define FILTER_TYPE_FILE        0
+#define FILTER_TYPE_DIR         1
 #define FILTER_TYPE_SET         3
 
 typedef struct _FILTER_ITEM_
@@ -107,7 +107,7 @@ typedef struct _FILEREPL_NOTIFICATION {
 
 
 #define USER_NETLINK_CMD	25
-#define MAXMSGLEN 			1024
+#define MAXMSGLEN 			1024 * 1024
 
 typedef enum error_e {
 	NET_ERROR,

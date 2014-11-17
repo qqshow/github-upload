@@ -28,7 +28,7 @@
 
 
 #define USER_NETLINK_CMD	25
-#define MAXMSGLEN 			1024
+#define MAXMSGLEN 			1024*1024
 
 typedef enum error_e {
 	NET_ERROR,

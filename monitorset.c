@@ -115,8 +115,10 @@ int checkneedtolog(char *path)
 
 int ConfigDelAllMonitorSet()
 {
+    int ret = 0;    
+	ret = DelAllMonitorSet();
     SaveConfig();
-	return DelAllMonitorSet();
+    return ret;
 }
 
 
@@ -399,12 +401,13 @@ int ConfigAddMonitorSet(PFILEREPL_NOTIFICATION pfn,
         return -1;
     }
 
+    
+
     pBackupData=&pfn->AddOrDel.BackupData;
 
     //mse.hdr.guidSetId = pBackupData->guidSetId;
     memcpy(&mse.hdr.guidSetId, &pBackupData->guidSetId,sizeof(GUID));
 	mse.ullSetSeqNo = 0;
-	
 	
 
     strncat(mse.wcsSetCacheDir,pBackupData->wszBakCacheDir, strlen(pBackupData->wszBakCacheDir));
@@ -659,6 +662,7 @@ int  InitMonitorSet(void)
 	int status = 0;
 
 
+
 		// ExInitializeResourceLite(&FileReplData.Config.MonitorFiles.SyncResource);
 
 	/*	ExInitializeNPagedLookasideList( &FileReplData.Config.MonitorSet.ItemLookAsideList,
@@ -672,6 +676,11 @@ int  InitMonitorSet(void)
 		//INIT_LIST_HEAD(&FileReplData.Config.MonitorSet.listHead);
 		//InitializeListHead(&FileReplData.Config.MonitorSet.listHead);
 		memset(&FileReplData,0,sizeof(FILEREPL_DATA));
+        FileReplData.Config.MonitorFiles.ulCounts = 0;
+		FileReplData.Config.MonitorSet.ulCounts = 0;
+        FileReplData.Config.bValid = true;
+        FileReplData.Config.bNormalRunning = true;
+        
 		FileReplData.Config.MonitorFiles.ItemLookAsideList = kmem_cache_create("MONITOR_FILES_ENTRY",sizeof(MONITOR_FILE_ENTRY),0,SLAB_HWCACHE_ALIGN,NULL);
 		if(FileReplData.Config.MonitorFiles.ItemLookAsideList == NULL)
 		{
@@ -711,6 +720,9 @@ UninitMonitorSet(void)
 	// FPLogF("UninitMonitorSet ==>");
 	// SaveMonitorFiles();
 
+	FileReplData.Config.bValid = false;
+    FileReplData.bStopTask = true;
+    
 	printk("UninitMonitorSet\n");
 	DumpAllMonitorSet();
 	ConfigDelAllMonitorSet();

@@ -47,12 +47,18 @@ int main(int argc, char **argv)
 	FILEREPL_NOTIFICATION replnotify = {0};
 	FILEREPL_NOTIFICATION * preplnotify = NULL;
 	replnotify.Type = NOTIFY_TYPE_ADDITEM;
-	strncpy(replnotify.AddOrDel.BackupData.wszBakCacheDir,"/test/task1/",strlen("/test/task1/"));
+	strncpy(replnotify.AddOrDel.BackupData.wszBakCacheDir,"/test/task1",strlen("/test/task1"));
 	replnotify.AddOrDel.BackupData.ulSize = sizeof(REALTIME_BACKUP_DATA);
 //	ret = netlink_sock_init(&h_sock, HELLO_CMD, USER_NETLINK_CMD);
 //	if(NET_OK != parse_ret(ret))
 //		goto exit_p;
-    printf("cache dir is %s.\n",replnotify.AddOrDel.BackupData.wszBakCacheDir);
+    printf("cache dir is %s. len is %d.\n",replnotify.AddOrDel.BackupData.wszBakCacheDir,strlen(replnotify.AddOrDel.BackupData.wszBakCacheDir));
+    if(replnotify.AddOrDel.BackupData.wszBakCacheDir[strlen(replnotify.AddOrDel.BackupData.wszBakCacheDir) ] != '/')
+    {
+        replnotify.AddOrDel.BackupData.wszBakCacheDir[strlen(replnotify.AddOrDel.BackupData.wszBakCacheDir)] = '/';
+    }
+    printf("cache dir is %s. len is %d.\n",replnotify.AddOrDel.BackupData.wszBakCacheDir,strlen(replnotify.AddOrDel.BackupData.wszBakCacheDir));
+
 	RegisterUserAppNotify(callback);
 
 	printf("size of FILEREPL_NOTIFICATION is %d.\n",sizeof(FILEREPL_NOTIFICATION));
@@ -74,20 +80,27 @@ int main(int argc, char **argv)
 	sleep(5);
 
 	//add backup item
-	int filerepllen = sizeof(FILEREPL_NOTIFICATION) + sizeof(FILTER_ITEM);
+	int filerepllen = sizeof(FILEREPL_NOTIFICATION) + sizeof(FILTER_ITEM) * 5;
 	preplnotify = malloc(filerepllen);
 	memset(preplnotify,0,filerepllen);
 	
 	preplnotify->Type = NOTIFY_TYPE_ADDITEM;
-	preplnotify->AddOrDel.BackupData.guidSetId.Data1 = 2;
-	preplnotify->AddOrDel.BackupData.ulFilterItemCounts = 2;
-	strncpy(preplnotify->AddOrDel.BackupData.wszBakCacheDir,"/test/task2/",strlen("/test/task2/"));
-	preplnotify->AddOrDel.BackupData.ulSize = sizeof(REALTIME_BACKUP_DATA) + sizeof(FILTER_ITEM);
+	preplnotify->AddOrDel.BackupData.guidSetId.Data1 = 6;
+	preplnotify->AddOrDel.BackupData.ulFilterItemCounts = 6;
+	strncpy(preplnotify->AddOrDel.BackupData.wszBakCacheDir,"/test/task2",strlen("/test/task2"));
+	preplnotify->AddOrDel.BackupData.ulSize = sizeof(REALTIME_BACKUP_DATA) + 5 * sizeof(FILTER_ITEM);
 	preplnotify->AddOrDel.BackupData.FilterItems[0].ulFileType = FILTER_TYPE_FILE;
 	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[0].wszFilterName,"/bbbbb/",strlen("/bbbbb/"));
 	preplnotify->AddOrDel.BackupData.FilterItems[1].ulFileType = FILTER_TYPE_FILE;
 	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[1].wszFilterName,"/cccccccccc/",strlen("/ccccccccc/"));
-
+    preplnotify->AddOrDel.BackupData.FilterItems[2].ulFileType = FILTER_TYPE_FILE;
+	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[2].wszFilterName,"/dddddddddd/",strlen("/ddddddddd/"));
+    preplnotify->AddOrDel.BackupData.FilterItems[3].ulFileType = FILTER_TYPE_FILE;
+	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[3].wszFilterName,"/eeeeeeeeee/",strlen("/eeeeeeeee/"));
+    preplnotify->AddOrDel.BackupData.FilterItems[4].ulFileType = FILTER_TYPE_FILE;
+	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[4].wszFilterName,"/ffffffffff/",strlen("/fffffffff/"));
+    preplnotify->AddOrDel.BackupData.FilterItems[5].ulFileType = FILTER_TYPE_FILE;
+	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[5].wszFilterName,"/cccccccccc/",strlen("/ccccccccc/"));
     printf("cache dir is %s.\n",preplnotify->AddOrDel.BackupData.wszBakCacheDir);
 	ret = AddBackupItems(&preplnotify->AddOrDel.BackupData);
 

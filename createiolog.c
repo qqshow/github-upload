@@ -19,6 +19,7 @@
 #include "createiolog.h"
 #include "fruk.h"
 #include "iowritethread.h"
+#include "monitorset.h"
 
 
 #define ASYNC_IOWRITE
@@ -54,8 +55,11 @@ int createiolog(char *iologpath, PLOG_FILE iologfile, int iologfilesize)
 
 	if(filep)
 		file_close(filep);
+
+    if(ret == 0)
+        SaveConfig();
 out:
-		return ret;
+	return ret;
 }
 
 

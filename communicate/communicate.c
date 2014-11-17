@@ -27,7 +27,7 @@
 #include "communicate.h"
 #include "comwrapper.h"
 
-#include "com_una_realtime_RtBackupAgent_RtDriverControl.h"
+//#include "com_una_realtime_RtBackupAgent_RtDriverControl.h"
 
 netlink_sock *p_sock = NULL;
 void* thread_entry(void* context);
@@ -142,7 +142,7 @@ int SendConfig(REALTIME_BACKUP_DATA *pBackupData, ULONG ulType)
 	PFILEREPL_NOTIFICATION pFN = NULL;
 	int ulFnSize = 0;
 	int ret = 0;
-
+    int i=0 ;
 	if(p_sock == NULL)
 	{
 		printf("netlink sock is not initalized.\n");
@@ -157,7 +157,7 @@ int SendConfig(REALTIME_BACKUP_DATA *pBackupData, ULONG ulType)
 	{
 		ulFnSize = sizeof(FILEREPL_NOTIFICATION);
 	}
-	
+	printf("ulFnSize %d.\n");
 	pFN=(FILEREPL_NOTIFICATION*)malloc(ulFnSize);
 	if(pFN == NULL)
 	{
@@ -168,9 +168,19 @@ int SendConfig(REALTIME_BACKUP_DATA *pBackupData, ULONG ulType)
 
 	if(pBackupData)
 	{
+        if(pBackupData->wszBakCacheDir[strlen(pBackupData->wszBakCacheDir) ] != '/')
+        {
+            pBackupData->wszBakCacheDir[strlen(pBackupData->wszBakCacheDir)] = '/';
+        }
 		memcpy((char *)&(pFN->AddOrDel.BackupData),(char *)pBackupData,pBackupData->ulSize);
-		printf("cache dir is %s. ulsize is %d\n,%d.",pFN->AddOrDel.BackupData.wszBakCacheDir,pBackupData->ulSize,sizeof(REALTIME_BACKUP_DATA));
+		printf("cache dir is %s. ulsize is %d\n,%d.\n",pFN->AddOrDel.BackupData.wszBakCacheDir,pBackupData->ulSize,sizeof(REALTIME_BACKUP_DATA));
+        for(i = 0; i< pFN->AddOrDel.BackupData.ulFilterItemCounts; i++)
+        {
+            printf("Type: %d. %s\n", pFN->AddOrDel.BackupData.FilterItems[i].ulFileType,pFN->AddOrDel.BackupData.FilterItems[i].wszFilterName);
+
+        }
 	}
+
 	ret = netlink_send(p_sock,RTB_CMD,(char *)pFN,ulFnSize);
 
 	if(pFN)
@@ -378,7 +388,7 @@ int ProcessRecvMessage(PFILEREPL_NOTIFICATION notification)
 
 int OnNotifyUserApp(int type,int Status)
 {
-	NotifyManagerDriverMessage(type,Status);
+	//NotifyManagerDriverMessage(type,Status);
 	if(DealKernelMsgCallback == NULL)
 	{
 		printf("not register callback\n");

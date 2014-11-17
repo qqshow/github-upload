@@ -122,9 +122,9 @@ enumModuleRunningState;
 
 
 
-#define FILTER_TYPE_INVALID     0
-#define FILTER_TYPE_FILE        1
-#define FILTER_TYPE_DIR         2
+//#define FILTER_TYPE_INVALID     0
+#define FILTER_TYPE_FILE        0
+#define FILTER_TYPE_DIR         1
 #define FILTER_TYPE_SET         3
 
 typedef struct _FILTER_ITEM_
@@ -174,11 +174,11 @@ typedef struct _FILEREPL_NOTIFICATION {
 int InitCommunicate();
 
 /*****************************************************************************
- * Function      : QueryDriverStatus
- * Description   : Query driver running status.
+ * Function      : QueryLastShutDownStatus
+ * Description   : Query last shutdown status
  * Input          : None
  * Output        : None
- * Return        : 0 for success.
+ * Return        : >=0 for success.
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -204,12 +204,11 @@ int QueryDriverStatus();
 int QueryLastShutDownStatus();
 
 /*****************************************************************************
- * Function      : ResetLastShutDownStatus
- * Description   : Reset last shutdown status to normal 
+ * Function      : QueryLastShutDownStatus
+ * Description   : Query last shutdown status
  * Input          : None
  * Output        : None
- * Return        : Success return systemrunning or systemexceptionreboot
- *                 . -1 for error.
+ * Return        : >=0 for success.
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -220,11 +219,11 @@ int QueryLastShutDownStatus();
 int ResetLastShutDownStatus();
 
 /*****************************************************************************
- * Function      : AddBackupSet
- * Description   : Add backup set
+ * Function      : DelBackupSet
+ * Description   : Delete one backup set
  * Input         : REALTIME_BACKUP_DATA * pBackupData  
  * Output        : None
- * Return        : Success return modulerunning or moduleerror. -1 for error.
+ * Return        : >= 0 for success
  * Others        : 
  * Record
  * 1.Date        : 20140929
@@ -235,8 +234,8 @@ int ResetLastShutDownStatus();
 int AddBackupSet (REALTIME_BACKUP_DATA * pBackupData);
 
 /*****************************************************************************
- * Function      : AddBackupItems
- * Description   : Add backup items.
+ * Function      : DelBackupSet
+ * Description   : Delete one backup set
  * Input         : REALTIME_BACKUP_DATA * pBackupData  
  * Output        : None
  * Return        : >= 0 for success
