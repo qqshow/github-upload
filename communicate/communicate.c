@@ -84,19 +84,22 @@ int InitCommunicate()
 int QueryDriverStatus()
 {
 	//return SendConfig(pBackupData,NOTIFY_TYPE_ADDSET);
-	return 0;
+	return SendConfig(NULL, NOTIFY_TYPE_QUERY_RUNNING_STATUS);
+	//return 0;
 }
 
 int QueryLastShutDownStatus()
 {
 	//return SendConfig(pBackupData,NOTIFY_TYPE_ADDSET);
-	return 0;
+	//return 0;
+	return SendConfig(NULL,NOTIFY_TYPE_QUERY_LAST_SHUTDOWN_STATUS);
 }
 
 int ResetLastShutDownStatus()
 {
 	//return SendConfig(pBackupData,NOTIFY_TYPE_ADDSET);
-	return 0;
+	//return 0;
+	return SendConfig(NULL, NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS);
 
 }
 

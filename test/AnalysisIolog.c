@@ -48,6 +48,7 @@
 int dump(LOG_FILE *iologfile)
 {
 	printf("-------------------------------------------------\n");
+	printf("%lld\n",iologfile->hdr.liSystemTime.QuadPart);
 	switch(iologfile->hdr.ulType)
 	{
 		case LOG_FILE_TYPE_DELETEFILE:

@@ -99,7 +99,7 @@ int (rtb_vfs_rename)(struct inode *old_dir, struct dentry *old_dentry,
     int ineedtolog = 0;
     ULONGLONG ullseqno = 0;
     ULONGLONG ullGlobalSeqno = 0;
-    ULONG timesec = 0;
+    ULONGLONG timesec = 0;
     char *iologdir  = NULL;
 
     if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
@@ -177,7 +177,7 @@ int (rtb_vfs_unlink)(struct inode *dir, struct dentry *dentry)
     int ineedtolog = 0;
     ULONGLONG ullseqno = 0;
     ULONGLONG ullGlobalSeqno = 0;
-    ULONG timesec = 0;
+    ULONGLONG timesec = 0;
     char *iologdir = NULL;
 
     if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
@@ -238,7 +238,7 @@ int (rtb_vfs_rmdir)(struct inode *dir, struct dentry *dentry)
     int ineedtolog = 0;
     ULONGLONG ullseqno = 0;
     ULONGLONG ullGlobalSeqno = 0;
-    ULONG timesec = 0;  
+    ULONGLONG timesec = 0;  
     if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
     {
         return run(dir,dentry);
@@ -297,7 +297,7 @@ int (rtb_vfs_create)(struct inode *dir, struct dentry *dentry, int mode,
     int ineedtolog = 0;
     ULONGLONG ullseqno = 0;
     ULONGLONG ullGlobalSeqno = 0;
-    ULONG timesec = 0;  
+    ULONGLONG timesec = 0;  
 
     if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
     {
@@ -333,7 +333,7 @@ int (rtb_vfs_create)(struct inode *dir, struct dentry *dentry, int mode,
         ineedtolog = 1;
         
         GetMonitorFileSeqNoByMonitorFileEntry(pmfe, &ullseqno, &ullGlobalSeqno, &timesec,iologdir);
-        printk("RTB: create seq: %lld. gseq: %lld. time: %lld.\n",ullseqno,ullGlobalSeqno,timesec);
+        printk("RTB: create seq: %ld. gseq: %ld. time: %ld.\n",ullseqno,ullGlobalSeqno,timesec);
     }
 
 out:
@@ -363,7 +363,7 @@ int (rtb_vfs_symlink)(struct inode *dir, struct dentry *dentry, const char *oldn
         int ineedtolog = 0;
         ULONGLONG ullseqno = 0;
         ULONGLONG ullGlobalSeqno = 0;
-        ULONG timesec = 0;  
+        ULONGLONG timesec = 0;  
 
         if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
         {
@@ -427,7 +427,7 @@ int (rtb_vfs_link)(struct dentry *old_dentry, struct inode *dir, struct dentry *
         int ineedtolog = 0;
         ULONGLONG ullseqno = 0;
         ULONGLONG ullGlobalSeqno = 0;
-        ULONG timesec = 0;  
+        ULONGLONG timesec = 0;  
         char *iologdir = NULL;
 
         if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
@@ -490,7 +490,7 @@ int (rtb_vfs_mkdir)(struct inode *dir, struct dentry *dentry, int mode)
     int ineedtolog = 0;
     ULONGLONG ullseqno = 0;
     ULONGLONG ullGlobalSeqno = 0;
-    ULONG timesec = 0;   
+    ULONGLONG timesec = 0;   
     char *iologdir  = NULL;
 
     if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
@@ -591,7 +591,7 @@ ssize_t (rtb_vfs_write)(struct file *file, const char __user *buf, size_t count,
     loff_t offset = *pos;
     ULONGLONG ullseqno = 0;
     ULONGLONG ullGlobalSeqno = 0;
-    ULONG timesec = 0;  
+    ULONGLONG timesec = 0;  
     char *iologdir = NULL;
 
     if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)

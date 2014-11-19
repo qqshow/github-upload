@@ -50,6 +50,19 @@ void netlink_to_user(int dest, void *buf, int len)
 	printk(KERN_ALERT "K send packet success\n");
 }
 
+int notify_user_status(int type,int status)
+{
+    int ret = NET_OK;
+    PFILEREPL_NOTIFICATION preplnotify = kzalloc(sizeof(FILEREPL_NOTIFICATION), GFP_KERNEL);
+    preplnotify->Type = type;
+    preplnotify->bNormalRunning = status;
+    printk(KERN_ALERT "RTB: notify user status %d. %d.\n",type,status);
+
+    netlink_to_user(RTB_CMD, preplnotify, sizeof(FILEREPL_NOTIFICATION));
+
+    return ret;
+}
+
 int process_netlink_cmd(int dest, void *buf, int len)
 {
 	int ret = NET_OK;
@@ -104,16 +117,17 @@ int process_netlink_cmd(int dest, void *buf, int len)
 			}
 			break;
 		case NOTIFY_TYPE_QUERY_RUNNING_STATUS:
-			printk("NOTIFY_TYPE_ADDSET\n");
-
+			printk("NOTIFY_TYPE_QUERY_RUNNING_STATUS\n");
+            notify_user_status(NOTIFY_TYPE_QUERY_RUNNING_STATUS,FileReplData.Config.bNormalRunning);
 			break;
 		case NOTIFY_TYPE_QUERY_LAST_SHUTDOWN_STATUS:
 			printk("NOTIFY_TYPE_QUERY_LAST_SHUTDOWN_STATUS\n");
-
+			FileReplData.Config.dwLastNormalShutdown = systemrunning;
+            notify_user_status(NOTIFY_TYPE_QUERY_LAST_SHUTDOWN_STATUS,FileReplData.Config.dwLastNormalShutdown);
 			break;
 		case NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS:
 			printk("NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS\n");
-			FileReplData.Config.dwLastNormalShutdown = 1;
+			FileReplData.Config.dwLastNormalShutdown = systemrunning;
 			break;
 		default:
 			break;

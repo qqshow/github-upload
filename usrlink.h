@@ -69,11 +69,26 @@
 //
 #define NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS 12+NOTIFY_TYPE_USER_TO_DRV_START
 
+//驱动通知应用程序错误状态
+#define NOTIFY_TYPE_CLIENT_ERROR 13+NOTIFY_TYPE_USER_TO_DRV_START
+
+
 
 //#define FILTER_TYPE_INVALID     0
 #define FILTER_TYPE_FILE        0
 #define FILTER_TYPE_DIR         1
 #define FILTER_TYPE_SET         3
+
+
+typedef enum
+{
+	systeminit,// init state (only used in kernel module)
+	systemrunning,//last shutdown state is normal
+	systemshutdown,// shutdown state ( used in kernel module)
+	systemexceptionreboot//last shutdown state is exception
+}
+enumShutdownState; 
+
 
 typedef struct _FILTER_ITEM_
 {

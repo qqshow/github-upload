@@ -110,6 +110,14 @@ int main(int argc, char **argv)
 	ret = AddBackupItems(&preplnotify->AddOrDel.BackupData);
 	sleep(5);
 
+    while(1)
+    {
+        QueryDriverStatus();
+        sleep(3);
+        QueryLastShutDownStatus();
+        sleep(3);
+    }
+
 	//delete backup item
 //	preplnotify->Type = NOTIFY_TYPE_DELITEM;
 //	ret = DelBackupItems(&preplnotify->AddOrDel.BackupData);

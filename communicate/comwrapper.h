@@ -64,8 +64,8 @@ enumShutdownState;
 
 typedef enum
 {
-	modulerunning,
-	moduleerror
+	moduleerror,
+	modulerunning
 }
 enumModuleRunningState; 
 
@@ -119,6 +119,10 @@ enumModuleRunningState;
 // 重置上次关机状态
 //
 #define NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS 12+NOTIFY_TYPE_USER_TO_DRV_START
+
+
+//驱动通知应用程序错误状态
+#define NOTIFY_TYPE_CLIENT_ERROR 13+NOTIFY_TYPE_USER_TO_DRV_START
 
 
 

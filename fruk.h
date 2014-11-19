@@ -291,6 +291,7 @@ typedef struct _FILEREPL_DATA {
 	ULONG			dbgprintlevel;
 	ULONGLONG		ullIoBuffSize;           //
 	ULONGLONG		ullIoCounts;
+    ULONG           nlmsg_pid;               //net link communicate port
 } FILEREPL_DATA, *PFILEREPL_DATA;
 
 extern FILEREPL_DATA FileReplData;

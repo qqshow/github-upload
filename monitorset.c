@@ -769,13 +769,14 @@ int GetMonitorFileSeqNoByMonitorFileEntry(PMONITOR_FILE_ENTRY pmfe,
     }
     
     ts = current_kernel_time();
-    
-    *timesecs = ts.tv_sec;
+	*timesecs = ts.tv_sec * 1000;
+	*timesecs = *timesecs * 10000;
+	*timesecs = *timesecs + ts.tv_nsec / 100;
     *pullSeqNo = pmfe->ullSeqNo;
     pmfe->ullSeqNo++;
 
     *pullGlocalSetSeqNo = pmse->ullSetSeqNo;
-    printk("RTB: testSeqNo %d.\n",*pullGlocalSetSeqNo);
+    printk("RTB: testSeqNo %ld. sec is %ld. nanosec is %d. \n",*pullGlocalSetSeqNo,*timesecs,ts.tv_nsec);
     pmse->ullSetSeqNo++;
     //printk("RTB: wcsSetCacheDir %s.\n",pmfe->pSetEntry->wcsSetCacheDir);
     strncpy(iologdir,pmfe->pSetEntry->wcsSetCacheDir,strlen(pmfe->pSetEntry->wcsSetCacheDir));
@@ -939,7 +940,7 @@ int SaveConfig()
     for (node = rb_first(&FileReplData.Config.MonitorSet.RBTree); node; node = rb_next(node))
     {
         pmse = rb_entry(node, MONITOR_SET_ENTRY, hdr.rbnode);
-        printk("RTB: monitor set guid %d.\n",pmse->hdr.guidSetId.Data1);
+        //printk("RTB: monitor set guid %d.\n",pmse->hdr.guidSetId.Data1);
         if(file_write(filep, writeoffset, (char *)pmse, sizeof(MONITOR_SET_ENTRY)) != sizeof(MONITOR_SET_ENTRY))
         {
             printk("RTB: write monitor set error\n");
@@ -954,7 +955,7 @@ int SaveConfig()
     for (node = rb_first(&FileReplData.Config.MonitorFiles.RBTree); node; node = rb_next(node))
     {
         pmfe = rb_entry(node, MONITOR_FILE_ENTRY, hdr.rbnode);
-        printk("RTB: monitor file %s\n",pmfe->wcsMonitorFile);
+        //printk("RTB: monitor file %s\n",pmfe->wcsMonitorFile);
         if(file_write(filep, writeoffset, (char *)pmfe, sizeof(MONITOR_FILE_ENTRY)) != sizeof(MONITOR_FILE_ENTRY))
         {
             printk("RTB: write monitor item error\n");
