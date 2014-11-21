@@ -380,7 +380,7 @@ int createiologforrename(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong
 		if(newlen > 260)
 			newlen = 260;
 
-		iologfilelen = sizeof(LOG_FILE) + newlen - 1;
+		iologfilelen = sizeof(LOG_FILE) + newlen - 4;
 		
 		iologfile = kmalloc(iologfilelen, GFP_KERNEL);
 		if(iologfile == NULL)
@@ -445,7 +445,7 @@ int createiologforcreatesymlink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ul
 	if(newlen > 260)
 		newlen = 260;
 
-	iologfilelen = sizeof(LOG_FILE) + newlen - 1;
+	iologfilelen = sizeof(LOG_FILE) + newlen - 4;
 	
 	iologfile = kmalloc(iologfilelen, GFP_KERNEL);
 	if(iologfile == NULL)
@@ -512,7 +512,7 @@ int createiologforcreatelink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulong
 		if(newlen > 260)
 			newlen = 260;
 	
-		iologfilelen = sizeof(LOG_FILE) + newlen - 1;
+		iologfilelen = sizeof(LOG_FILE) + newlen - 4;
 		
 		iologfile = kmalloc(iologfilelen, GFP_KERNEL);
 		if(iologfile == NULL)
@@ -571,7 +571,7 @@ int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 		PLOG_FILE iologfile = NULL;
         PIOWRITE_CONTEXT piowc = NULL;
 		int len = strlen(abspath);
-		int iologfilelen = sizeof(LOG_FILE) + count - 1;
+		int iologfilelen = sizeof(LOG_FILE) + count - 4;
 		if(len > 260)
 			len = 260;
 	
@@ -610,7 +610,10 @@ int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 #else
 		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 		if(iret != 0)
-			printk("create io log error.\n");
+		{
+			printk("create io log error. iologpath is %s.\n",iologpath);
+			notify_user_status(NOTIFY_TYPE_CLIENT_ERROR,-2);
+		}
 #endif		
 	out:	
 		if(iologfile)

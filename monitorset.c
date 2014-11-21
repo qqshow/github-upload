@@ -702,6 +702,7 @@ int  InitMonitorSet(void)
 		FileReplData.Config.MonitorFiles.RBTree = RB_ROOT;
 
         spin_lock_init(&FileReplData.Config.iowritequeuelock);
+		spin_lock_init(&FileReplData.Config.gseqnolock);
 
         // init iowrite queue
         INIT_LIST_HEAD(&FileReplData.Config.iowritequeue);
@@ -767,17 +768,18 @@ int GetMonitorFileSeqNoByMonitorFileEntry(PMONITOR_FILE_ENTRY pmfe,
                 return status;
             }
     }
-    
+
+	spin_lock(&FileReplData.Config.gseqnolock);
     ts = current_kernel_time();
 	*timesecs = ts.tv_sec * 1000;
 	*timesecs = *timesecs * 10000;
 	*timesecs = *timesecs + ts.tv_nsec / 100;
     *pullSeqNo = pmfe->ullSeqNo;
     pmfe->ullSeqNo++;
-
     *pullGlocalSetSeqNo = pmse->ullSetSeqNo;
     printk("RTB: testSeqNo %ld. sec is %ld. nanosec is %d. \n",*pullGlocalSetSeqNo,*timesecs,ts.tv_nsec);
     pmse->ullSetSeqNo++;
+	spin_unlock(&FileReplData.Config.gseqnolock);
     //printk("RTB: wcsSetCacheDir %s.\n",pmfe->pSetEntry->wcsSetCacheDir);
     strncpy(iologdir,pmfe->pSetEntry->wcsSetCacheDir,strlen(pmfe->pSetEntry->wcsSetCacheDir));
     //printk("RTB: iologdir %s.\n",iologdir);

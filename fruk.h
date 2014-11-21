@@ -234,6 +234,7 @@ typedef struct _FILEREPL_CONFIG
     BOOL                    bDirty;             //用于定时保存配置数据时判断配置数据是否改变
     struct list_head        iowritequeue;       //异步io日志写队列
     spinlock_t              iowritequeuelock;
+	spinlock_t				gseqnolock;
     
 } FILEREPL_CONFIG, *PFILEREPL_CONFIG;
 
