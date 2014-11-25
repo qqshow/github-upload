@@ -6,7 +6,7 @@
  * File Name     : iowritethread.c
  * Author        : lb
  * Date          : 2014-10-30
- * Description   : .C file function description
+ * Description   : io write thread.
  * Version       : 1.0
  * Function List :
  * 

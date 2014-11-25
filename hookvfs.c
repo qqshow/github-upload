@@ -32,6 +32,7 @@
 #include <linux/delay.h>
 #include <linux/time.h>
 #include "monitorset.h"
+#include "rtbnetlink.h"
 
 // vfs function definition
 /*
@@ -623,10 +624,15 @@ ssize_t (rtb_vfs_write)(struct file *file, const char __user *buf, size_t count,
 
 	ret = run(file,buf,count,pos);
 	if(ret > 0 && ineedtolog)
-		createiologforwrite(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath,buf,count,&offset);
+		iret = createiologforwrite(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath,buf,count,&offset);
     else if(ineedtolog)
-        createiologforerror(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath);
-	
+        iret = createiologforerror(ullseqno,ullGlobalSeqno,timesec,iologdir,abspath);
+	if(iret != 0)
+	{
+		printk("RTB: create io log for write error......\n");
+		FileReplData.Config.bNormalRunning = false;
+		notify_user_status(NOTIFY_TYPE_CLIENT_ERROR,-3);
+	}
  out:  
  	if(abspath)
 		kfree(abspath);

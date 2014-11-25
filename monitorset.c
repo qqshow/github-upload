@@ -121,6 +121,13 @@ int ConfigDelAllMonitorSet()
     return ret;
 }
 
+int DelAllMonitorSetinMemory()
+{
+    int ret = 0;    
+	ret = DelAllMonitorSet();
+    return ret;
+}
+
 
 int DumpAllMonitorSet()
 {
@@ -726,7 +733,7 @@ UninitMonitorSet(void)
     
 	printk("UninitMonitorSet\n");
 	DumpAllMonitorSet();
-	ConfigDelAllMonitorSet();
+	DelAllMonitorSetinMemory();
 	DumpAllMonitorSet();
 		//ExDeleteNPagedLookasideList(&FileReplData.Config.MonitorSet.ItemLookAsideList);
 

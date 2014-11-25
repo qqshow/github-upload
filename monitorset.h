@@ -42,6 +42,9 @@ int ConfigDelMonitorItem(PFILEREPL_NOTIFICATION pfn);
 
 int ConfigDelAllMonitorSet();
 
+int DelAllMonitorSetinMemory();
+
+
 int GetMonitorFileSeqNoByMonitorFileEntry(PMONITOR_FILE_ENTRY pmfe,
 						ULONGLONG* pullSeqNo,  ULONGLONG* pullSetSeqNo ,ULONGLONG *timesecs,char *iologdir);
 

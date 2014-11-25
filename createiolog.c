@@ -578,6 +578,7 @@ int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 		iologfile = kmalloc(iologfilelen, GFP_KERNEL);
 		if(iologfile == NULL)
 		{
+		  printk("RTB: kmalloc error in createiologforwrite.\n");
 		  iret = -1;
 		  return iret;
 		}
