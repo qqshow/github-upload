@@ -26,4 +26,7 @@ lsmod | grep rtbackup
 if [ $? -ne 0 ] 
 then 
 	echo "sucess" >>/tmp/install
+	echo "0"
+	exit
 fi
+echo "1"

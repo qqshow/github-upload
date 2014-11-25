@@ -12,7 +12,7 @@ UNAME=`uname -r`
 echo "install module" >> /tmp/install
 echo "`date`" >>/tmp/install
 #cp module
-mkdir -p /lib/modules/$UNAME/extra/rtbackup/
+mkdir -p /lib/modules/$UNAME/extra/rtbackup/ >/dev/null 2>&1
 install -m 755 $path/rtbackup.ko /lib/modules/$UNAME/extra/rtbackup/
 
 cp -rf /etc/rc.d/rc.sysinit /etc/rc.d/rc.sysinit.lbbak
@@ -23,11 +23,14 @@ then
 fi
 
 #depmod
-/sbin/depmod
+/sbin/depmod >/dev/null 2>&1
 
 #load rtbackup.ko into kernel
-modprobe rtbackup
+modprobe rtbackup >/dev/null 2>&1
 if [ $? -eq 0 ] 
 then 
 	echo "sucess" >>/tmp/install
+	echo "0"
+	exit
 fi
+echo "1"
