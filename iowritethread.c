@@ -72,8 +72,20 @@ int thread_iowrite(void *data)
                 {
                     if(piowc->iologpath)
                         kfree(piowc->iologpath);
+					
                     if(piowc->logfile)
-                        kfree(piowc->logfile);
+                    {
+                    	if(piowc->logfile->hdr.ulType == LOG_FILE_TYPE_WRITE)
+                    	{
+                    		vfree(piowc->logfile);
+                    	}
+						else
+						{
+							kfree(piowc->logfile);
+						}
+                    }
+						
+                        
 
                     kfree(piowc);
                 }

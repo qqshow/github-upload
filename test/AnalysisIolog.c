@@ -103,6 +103,7 @@ int main(int argc, char* argv[])
 	int readlen = 0;
 	int iolognum = 0;
 	int loop = 0;
+	int loopdel = 0;
 	int bfirst = 1;
 	if(argc > 4 || argc < 3 )
 	{
@@ -112,6 +113,9 @@ int main(int argc, char* argv[])
 	// loop print io log info, don't exit app
 	if(argc == 4 && (strncmp("-loop", argv[3] , sizeof("-loop")) == 0))
 		loop = 1;
+	if(argc == 4 && (strncmp("-loopdel", argv[3] , sizeof("-loopdel")) == 0))
+		loopdel = 1;
+
 	printf("Io logs dir is %s.\n",argv[1]);
 	printf("begin num is %s.\n",argv[2]);
 	iolognum = atoi(argv[2]);
@@ -120,7 +124,7 @@ int main(int argc, char* argv[])
 	sprintf(iologpath, "%s%d", argv[1],iolognum);
 
 
-	while(loop || bfirst)
+	while(loop || bfirst || loopdel)
 	{
 		fp = fopen(iologpath,"rw");
 		while(fp != NULL)
@@ -143,6 +147,11 @@ int main(int argc, char* argv[])
 			fclose(fp);
 			if(piologfile)
 				free(piologfile);
+			if(loopdel)
+			{
+				unlink(iologpath);
+			}
+			
 			
 			memset(iologpath,0,1024);
 			sprintf(iologpath, "%s%d", argv[1],iolognum);

@@ -282,6 +282,8 @@ int netlink_recv(netlink_sock *netlink_s,int type,char *rbuf, int *rlen)
 		memcpy(rbuf, NLMSG_DATA(nlhdr), nlhdr->nlmsg_len);
 		*rlen = nlhdr->nlmsg_len;
 		printf("recv len %d.\n",*rlen);
+		if(nlhdr)
+			free(nlhdr);
 		return NET_OK;
 	
 	error:
@@ -332,7 +334,8 @@ int netlink_send(netlink_sock *netlink_s, int type, char *sbuf, int slen)
 		goto error;
 	}
 	printf("after sendmsg\n");
-
+	if(nlhdr)
+		free(nlhdr);
 	return NET_OK;
 
 error:

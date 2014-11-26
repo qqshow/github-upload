@@ -575,7 +575,8 @@ int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 		if(len > 260)
 			len = 260;
 	
-		iologfile = kmalloc(iologfilelen, GFP_KERNEL);
+		//iologfile = kmalloc(iologfilelen, GFP_KERNEL);
+		iologfile = vmalloc(iologfilelen);
 		if(iologfile == NULL)
 		{
 		  printk("RTB: kmalloc error in createiologforwrite.\n");

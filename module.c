@@ -68,7 +68,7 @@ int init_rtbackup(void) {
 	int ret;
 
 	printk(KERN_ALERT "Init rtbackup!\n");
-	printk("RTB: V1.0.0.2\n");
+	printk("RTB: V1.0.0.3\n");
 	// get needed kernel function address
 	ret = kernfunc_init();
 
@@ -156,5 +156,5 @@ module_exit(exit_rtbackup);
 MODULE_AUTHOR("lb");
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Real Time Backup(RtBackup) Module");
-MODULE_VERSION("1.0.2");
+MODULE_VERSION("1.0.0.3");
 
