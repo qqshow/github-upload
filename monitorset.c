@@ -322,7 +322,7 @@ int DumpAllMonitorSet()
 			{
 ////////////////////////////////////////////////////////////////////////////////////
 				//原有配置项和本次配置项是否完全匹配
-				if(strcmp(pmfeFound->wcsMonitorFile, pmfe->wcsMonitorFile) == 0)
+/*				if(strcmp(pmfeFound->wcsMonitorFile, pmfe->wcsMonitorFile) == 0)
 				{
 					if(memcmp(&pmfeFound->hdr.guidSetId, &pmfe->hdr.guidSetId, sizeof(GUID)) == 0)
 					{
@@ -350,6 +350,8 @@ int DumpAllMonitorSet()
 					//WriteEvent(FileReplData.DriverObject, status, pmfe->wcsMonitorFile);
 					printk("AddMonitorItem failed: name collision!. %s", pmfe->wcsMonitorFile);
 				}
+				*/
+				status = 0;
 ////////////////////////////////////////////////////////////////////////////////////
 			}
 		
