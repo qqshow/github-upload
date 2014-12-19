@@ -77,8 +77,13 @@ int init_rtbackup(void) {
 
     //register reboot and shutdown notifier
     register_reboot_notifier(&myreboot_notifier);
-    
+#if(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,18))
+	netlink_fd = netlink_kernel_create(USER_NETLINK_CMD,netlink_receive_user_sk);
+#elif(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
+	netlink_fd = netlink_kernel_create(USER_NETLINK_CMD,0,netlink_receive_user_sk,THIS_MODULE);
+#else
 	netlink_fd = netlink_kernel_create(&init_net, USER_NETLINK_CMD, 0, netlink_recv_packet, NULL, THIS_MODULE);
+#endif
 	if(NULL == netlink_fd)
 	{
 		printk(KERN_ALERT "Init netlink failed!\n");
@@ -135,7 +140,11 @@ static void exit_rtbackup(void) {
 	printk(PKPRE "removed from kernel\n");
 
 	unregister_reboot_notifier(&myreboot_notifier);
+#if(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
+	sock_release(netlink_fd->sk_socket);
+#else
 	netlink_kernel_release(netlink_fd);
+#endif
 
     if (!IS_ERR(_tsk))
     {  

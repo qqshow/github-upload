@@ -167,19 +167,16 @@ int symbol_hijack(struct kernsym *sym, const char *symbol_name, unsigned long *c
 	u32 *poffset;
 	struct insn insn;
 	bool pte_ro;
-	
 	ret = find_symbol_address(sym, symbol_name);
 
 	if (IN_ERR(ret))
 		return ret;
-
 	if (*(u8 *)sym->addr == OP_JMP_REL32) {
 		printk(PKPRE "error: %s already appears to be hijacked\n", symbol_name);
 		return -EFAULT;
 	}
 
 	sym->new_addr = malloc(sym->size);
-
 
 	if (sym->new_addr == NULL) {
 		printk(PKPRE
@@ -189,19 +186,20 @@ int symbol_hijack(struct kernsym *sym, const char *symbol_name, unsigned long *c
 	}
 
 	memset(sym->new_addr, 0, (size_t)sym->size);
-
+	
 	if (sym->size < OP_JMP_SIZE) {
 		ret = -EFAULT;
 		goto out_error;
 	}
-	
+
 	orig_addr = (unsigned long)sym->addr;
 	dest_addr = (unsigned long)sym->new_addr;
-	
+
+
 	end_addr = orig_addr + sym->size;
 	while (end_addr > orig_addr && *(u8 *)(end_addr - 1) == '\0')
 		--end_addr;
-	
+
 	if (orig_addr == end_addr) {
 		printk(PKPRE
 			"A spurious symbol \"%s\" (address: %p) seems to contain only zeros\n",
@@ -212,7 +210,9 @@ int symbol_hijack(struct kernsym *sym, const char *symbol_name, unsigned long *c
 	}
 	
 	while (orig_addr < end_addr) {
+
 		rtb_insn_init(&insn, (void *)orig_addr);
+
 		rtb_insn_get_length(&insn);
 		if (insn.length == 0) {
 			printk(PKPRE
@@ -223,9 +223,9 @@ int symbol_hijack(struct kernsym *sym, const char *symbol_name, unsigned long *c
 			ret = -EILSEQ;
 			goto out_error;
 		}
-		
+
 		copy_and_fixup_insn(&insn, (void *)dest_addr, sym);
-		
+
 		orig_addr += insn.length;
 		dest_addr += insn.length;
 	}

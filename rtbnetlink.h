@@ -37,6 +37,11 @@ void netlink_process_packet(struct nlmsghdr *nl);
 void netlink_recv_packet(struct sk_buff *__skb);
 int notify_user_status(int type,int status);
 
+#if(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19))
+void netlink_receive_user_sk(struct sock *sk, int len);
+#endif
+
+
 #endif
 
 

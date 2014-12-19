@@ -28,9 +28,12 @@
 #include <linux/unistd.h>
 #include <linux/limits.h>
 #include <linux/fs.h>
+#if(LINUX_VERSION_CODE > KERNEL_VERSION(2,6,18))
 #include <linux/path.h>
-#include <linux/dcache.h>
 #include <linux/fdtable.h>
+#endif
+#include <linux/dcache.h>
+
 #include <linux/version.h>
 #include <linux/delay.h>
 #include <linux/time.h>
@@ -48,11 +51,20 @@
  * 1.Date        : 20140926
  *   Author      : lb
  *   Modification: Created function
-
+ *   			   
+  * 2.Date        : 20141218
+ *   Author      : lb
+ *   Modification: add support for 2.6.18
 *****************************************************************************/
 int getfilepath(unsigned int fd, char *abspath)
 {
+#if(LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,18))
+	struct dentry *mydentry = current->files->fdt->fd[fd]->f_dentry;
+#else
 	struct dentry *mydentry = current->files->fdt->fd[fd]->f_path.dentry;
+#endif
+
+	
 	return getabsfullpathfromdentry(mydentry,abspath);
 }
 
@@ -83,8 +95,15 @@ int getabsparentpath(const char * pathname,char *abspath)
 	printk("path_lookup return %d.\n",ret);
 	if(1)
 	{
-	  polddentry = nd.path.dentry;
-	  pdentry = nd.path.dentry->d_parent;
+#if(LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,18))
+	polddentry = nd.dentry;
+	pdentry = nd.dentry->d_parent;
+#else
+	polddentry = nd.path.dentry;
+	pdentry = nd.path.dentry->d_parent;
+
+#endif
+
 	  len = pdentry->d_name.len;
 	  ppath = (char *)pdentry->d_name.name;
 	  while(pdentry != pdentry->d_parent)
@@ -272,12 +291,26 @@ int getabsfullpathfromstructfile(struct file * file, char *abspath)
 	
 	char *tmp = NULL;
 	char *pathname;
-	struct path path;
+	
+#if(LINUX_VERSION_CODE > KERNEL_VERSION(2,6,18))
+	struct path path;	
+#endif
+
 	if(file == NULL )
 	{
 			return ret;
 	}
-		
+#if(LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,18))
+	tmp = (char *)__get_free_page(0);
+	if(!tmp){
+		return -ENOMEM;;
+	}
+	pathname = get_d_path(file, tmp, PATH_MAX);
+	strcat(abspath,pathname);
+	if(tmp)
+		free_page((unsigned long)tmp);
+#else
+
 	path = file->f_path;
 	path_get(&file->f_path);
 	tmp = (char *)__get_free_page(GFP_TEMPORARY);
@@ -293,6 +326,9 @@ int getabsfullpathfromstructfile(struct file * file, char *abspath)
 	strcat(abspath,pathname);
 	if(tmp)
 		free_page((unsigned long)tmp);
+	
+#endif
+
 
 	return ret;
 	

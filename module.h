@@ -49,6 +49,12 @@
 #include <linux/types.h>
 #include <linux/notifier.h>
 
+#if(LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,18))
+#include <linux/vmalloc.h>
+#endif
+
+
+
 #ifndef CONFIG_SECURITY
 #error "This module requires CONFIG_SECURITY to be enabled"
 #endif

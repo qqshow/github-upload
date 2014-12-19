@@ -1,6 +1,12 @@
 MODULE_NAME := rtbackup
 
-EXTRA_CFLAGS += -I$(src)
+# This subdirectory contains necessary files for both x86 and x86-64.
+ARCH_DIR := arch/x86
+EXTRA_CFLAGS += -I$(src) -I$(src)/$(ARCH_DIR)/include -I$(obj)/$(ARCH_DIR)/lib
+
+# This auxiliary file will be generated during the build (x86 instruction 
+# tables as C code).
+INAT_TABLES_FILE := inat-tables.h
 
 ifeq ($(KERNELRELEASE),)
 
@@ -38,7 +44,7 @@ clean:
 else
 # KBuild part. 
 # It is used by the kernel build system to actually build the module.
-ccflags-y :=  -I$(src)
+ccflags-y :=  -I$(src) -I$(src)/$(ARCH_DIR)/include -I$(obj)/$(ARCH_DIR)/lib
 
 obj-m := $(MODULE_NAME).o
 $(MODULE_NAME)-y := \
@@ -53,5 +59,13 @@ $(MODULE_NAME)-y := \
     createiolog.o \
     rtbnetlink.o \
     rb.o \
-    iowritethread.o
+    iowritethread.o \
+    $(ARCH_DIR)/lib/inat.o \
+    $(ARCH_DIR)/lib/insn.o
+
+$(obj)/$(ARCH_DIR)/lib/inat.o: $(obj)/$(ARCH_DIR)/lib/$(INAT_TABLES_FILE) $(src)/$(ARCH_DIR)/lib/inat.c
+
+$(obj)/$(ARCH_DIR)/lib/$(INAT_TABLES_FILE): $(src)/$(ARCH_DIR)/lib/x86-opcode-map.txt 
+	LC_ALL=C awk -f $(src)/$(ARCH_DIR)/tools/gen-insn-attr-x86.awk $< > $@
+	
 endif

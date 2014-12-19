@@ -22,6 +22,12 @@
 #include "rtbnetlink.h"
 #include "monitorset.h"
 
+#if(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19))
+
+#include <net/netlink.h>
+
+#endif
+
 struct sock *netlink_fd;
 
 
@@ -39,7 +45,9 @@ void netlink_to_user(int dest, void *buf, int len)
 		printk(KERN_ALERT "netlink_to_user skb of buf null!\n");
 		return;
 	}
+
 	nl = nlmsg_put(skb, 0, 0, 0, NLMSG_SPACE(len) - sizeof(struct nlmsghdr), 0);
+
 	NETLINK_CB(skb).pid = 0;
 	NETLINK_CB(skb).dst_group = 0;
 
@@ -164,12 +172,31 @@ void netlink_process_packet(struct nlmsghdr *nl)
 	}
 }
 
+#if(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19))
+
+void netlink_receive_user_sk(struct sock *sk, int len)
+{
+	struct sk_buff *skb;
+	unsigned int qlen = skb_queue_len(&sk->sk_receive_queue);
+
+	for (; qlen && (skb = skb_dequeue(&sk->sk_receive_queue)); qlen--) {
+		netlink_recv_packet(skb);
+		kfree_skb(skb);
+	}
+
+
+}
+#endif
+
+
+
 void netlink_recv_packet(struct sk_buff *__skb)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlhdr;
 	printk("netlink_recv_packet in.....\n");
 	skb = skb_get(__skb);
+	printk("rtb: skb->len is %d. nlmsghdr is %d.\n",skb->len,sizeof(struct nlmsghdr));
 	if(skb->len >= sizeof(struct nlmsghdr))
 	{
 		nlhdr = (struct nlmsghdr *)skb->data;

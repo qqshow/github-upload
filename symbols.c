@@ -239,7 +239,7 @@ int find_symbol_address(struct kernsym *sym, const char *symbol_name) {
 	#else
 	struct new_utsname *uts = utsname();
 	#endif
-
+	printk("RTB: find_symbol_address %s.\n",symbol_name);
 	sym->name = symbol_name;
 
 	ret = find_symbol_address_from_file(sym, "/proc/kallsyms");

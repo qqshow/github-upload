@@ -689,7 +689,7 @@ int  InitMonitorSet(void)
 		FileReplData.Config.MonitorSet.ulCounts = 0;
         FileReplData.Config.bValid = true;
         FileReplData.Config.bNormalRunning = true;
-        
+ #if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 18)
 		FileReplData.Config.MonitorFiles.ItemLookAsideList = kmem_cache_create("MONITOR_FILES_ENTRY",sizeof(MONITOR_FILE_ENTRY),0,SLAB_HWCACHE_ALIGN,NULL);
 		if(FileReplData.Config.MonitorFiles.ItemLookAsideList == NULL)
 		{
@@ -703,6 +703,23 @@ int  InitMonitorSet(void)
 			printk(PKPRE "create kmem cache error");
 			return -1;
 		}
+#else
+		FileReplData.Config.MonitorFiles.ItemLookAsideList = kmem_cache_create("MONITOR_FILES_ENTRY",sizeof(MONITOR_FILE_ENTRY),0,SLAB_HWCACHE_ALIGN,NULL,NULL);
+		if(FileReplData.Config.MonitorFiles.ItemLookAsideList == NULL)
+		{
+			printk(PKPRE "create kmem cache error");
+			return -1;
+		}
+
+		FileReplData.Config.MonitorSet.ItemLookAsideList = kmem_cache_create("MONITOR_SET_ENTRY",sizeof(MONITOR_SET_ENTRY),0,SLAB_HWCACHE_ALIGN,NULL,NULL);
+		if(FileReplData.Config.MonitorSet.ItemLookAsideList == NULL)
+		{
+			printk(PKPRE "create kmem cache error");
+			return -1;
+		}
+
+
+#endif
 
 
 

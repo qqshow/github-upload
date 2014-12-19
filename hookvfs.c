@@ -25,9 +25,11 @@
 #include <linux/unistd.h>
 #include <linux/limits.h>
 #include <linux/fs.h>
+#if(LINUX_VERSION_CODE > KERNEL_VERSION(2,6,18))
 #include <linux/path.h>
-#include <linux/dcache.h>
 #include <linux/fdtable.h>
+#endif
+#include <linux/dcache.h>
 #include <linux/version.h>
 #include <linux/delay.h>
 #include <linux/time.h>
