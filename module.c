@@ -77,7 +77,7 @@ int init_rtbackup(void) {
 
 	int ret;
 
-	rtbprintk(KERN_ALERT "Init rtbackup!\n");
+	rtbprintk(KERN_ALERT "Init rtbackup!!\n");
 	rtbprintk("RTB: V1.0.0.4\n");
 	// get needed kernel function address
 	ret = kernfunc_init();
