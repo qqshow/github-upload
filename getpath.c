@@ -92,7 +92,7 @@ int getabsparentpath(const char * pathname,char *abspath)
 	int len = 0;
 	
 	ret = path_lookup(pathname,LOOKUP_DIRECTORY,&nd);
-	printk("path_lookup return %d.\n",ret);
+	rtbprintk("path_lookup return %d.\n",ret);
 	if(1)
 	{
 #if(LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,18))
@@ -135,7 +135,7 @@ int getabsparentpath(const char * pathname,char *abspath)
 	  	}
 	  }
 	}
-	//printk("parent abs path %s \n",abspath);
+	//rtbprintk("parent abs path %s \n",abspath);
 	return ret;
 
 }
@@ -196,7 +196,7 @@ int getabsparentpathfromdentry(struct dentry *dentry,char *abspath)
 	  	}
 	  }
 	}
-	//printk("parent abs path %s \n",abspath);
+	//rtbprintk("parent abs path %s \n",abspath);
 	return ret;
 
 }
@@ -226,7 +226,7 @@ int getabsfullpathfromdentry(struct dentry *dentry, char *abspath)
         }
 		strncat(abspath, "/", strlen("/"));
         strncat(abspath, dentry->d_name.name, dentry->d_name.len);
-        //printk("Full abs path %s \n",abspath);
+        //rtbprintk("Full abs path %s \n",abspath);
     }
 
 	return 0;
@@ -259,7 +259,7 @@ int getabsfullpath(const char *pathname, char *abspath)
 	  strncat(abspath, "/", 2);
       strncat(abspath, pathname, strlen(pathname));
 	}
-	//printk("Full abs path %s \n",abspath);
+	//rtbprintk("Full abs path %s \n",abspath);
 	return 0;
 }
 
@@ -333,3 +333,7 @@ int getabsfullpathfromstructfile(struct file * file, char *abspath)
 	return ret;
 	
 }
+
+
+
+

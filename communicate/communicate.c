@@ -47,7 +47,7 @@ void RegisterUserAppNotify(int (*callback)(int,int))
 int InitCommunicate()
 {
 	int ret = 0;
-
+	printf("libcommunicate: Version 1.0.0.1\n");
 	//initalized yet
 	if(p_sock != NULL)
 	{

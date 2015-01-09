@@ -44,7 +44,7 @@ int file_write(struct file* file, unsigned long long offset, unsigned char* data
 
     oldfs = get_fs();
     set_fs(get_ds());
-	//printk("file_write  f_flags %d\n",file->f_flags);
+	//rtbprintk("file_write  f_flags %d\n",file->f_flags);
 	
     ret = vfs_write(file, data, size, &(offset));
     

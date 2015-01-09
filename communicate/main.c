@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 	preplnotify->AddOrDel.BackupData.FilterItems[1].ulFileType = FILTER_TYPE_FILE;
 	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[1].wszFilterName,"/cccccccccc/",strlen("/ccccccccc/"));
     preplnotify->AddOrDel.BackupData.FilterItems[2].ulFileType = FILTER_TYPE_FILE;
-	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[2].wszFilterName,"/dddddddddd/",strlen("/ddddddddd/"));
+	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[2].wszFilterName,"/mydatabase/mydir/",strlen("/mydatabase/mydir/"));
     preplnotify->AddOrDel.BackupData.FilterItems[3].ulFileType = FILTER_TYPE_FILE;
 	strncpy(preplnotify->AddOrDel.BackupData.FilterItems[3].wszFilterName,"/eeeeeeeeee/",strlen("/eeeeeeeee/"));
     preplnotify->AddOrDel.BackupData.FilterItems[4].ulFileType = FILTER_TYPE_FILE;

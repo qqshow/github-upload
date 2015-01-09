@@ -42,7 +42,7 @@ void netlink_to_user(int dest, void *buf, int len)
 	skb = alloc_skb(size, GFP_ATOMIC);
 	if(!skb || !buf)
 	{
-		printk(KERN_ALERT "netlink_to_user skb of buf null!\n");
+		rtbprintk(KERN_ALERT "netlink_to_user skb of buf null!\n");
 		return;
 	}
 
@@ -55,7 +55,7 @@ void netlink_to_user(int dest, void *buf, int len)
 	//nl->nlmsg_len = (len > 2) ? (len - 2):len;
 	nl->nlmsg_len = len;
 	netlink_unicast(netlink_fd, skb, dest, MSG_DONTWAIT);
-	printk(KERN_ALERT "K send packet success\n");
+	rtbprintk(KERN_ALERT "K send packet success\n");
 }
 
 int notify_user_status(int type,int status)
@@ -64,7 +64,7 @@ int notify_user_status(int type,int status)
     PFILEREPL_NOTIFICATION preplnotify = kzalloc(sizeof(FILEREPL_NOTIFICATION), GFP_KERNEL);
     preplnotify->Type = type;
     preplnotify->bNormalRunning = status;
-    printk(KERN_ALERT "RTB: notify user status %d. %d.\n",type,status);
+    rtbprintk(KERN_ALERT "RTB: notify user status %d. %d.\n",type,status);
 
     netlink_to_user(RTB_CMD, preplnotify, sizeof(FILEREPL_NOTIFICATION));
 
@@ -75,66 +75,66 @@ int process_netlink_cmd(int dest, void *buf, int len)
 {
 	int ret = NET_OK;
 	PFILEREPL_NOTIFICATION preplnotify = (PFILEREPL_NOTIFICATION )buf;
-	printk(KERN_ALERT "In process_hello get!\n");
+	rtbprintk(KERN_ALERT "In process_hello get!\n");
 
 	if(buf == NULL || len < sizeof(FILEREPL_NOTIFICATION))
 		return NET_PARAM;
-	printk("Type:%d. Running status %d. CacheDir %s.\n",preplnotify->Type,preplnotify->bNormalRunning,\
+	rtbprintk("Type:%d. Running status %d. CacheDir %s.\n",preplnotify->Type,preplnotify->bNormalRunning,\
 		preplnotify->AddOrDel.BackupData.wszBakCacheDir);
 
 	switch(preplnotify->Type)
 	{
 		case NOTIFY_TYPE_ADDSET:
-			printk("NOTIFY_TYPE_ADDSET\n");
+			rtbprintk("NOTIFY_TYPE_ADDSET\n");
 			ret = ConfigAddMonitorSet(preplnotify,true);
 			if(ret != 0)
 			{
-				printk("ConfigAddMonitorSet error.\n");
+				rtbprintk("ConfigAddMonitorSet error.\n");
 			}
 			break;
 		case NOTIFY_TYPE_ADDITEM:
-			printk("NOTIFY_TYPE_ADDITEM\n");
+			rtbprintk("NOTIFY_TYPE_ADDITEM\n");
 			ret = ConfigAddMonitorSet(preplnotify,false);
 			if(ret != 0)
 			{
-				printk("ConfigAddMonitorSet error.\n");
+				rtbprintk("ConfigAddMonitorSet error.\n");
 			}
 			break;
 		case NOTIFY_TYPE_DELSET:
-			printk("NOTIFY_TYPE_DELSET\n");
+			rtbprintk("NOTIFY_TYPE_DELSET\n");
 			ret = ConfigDelMonitorSet(preplnotify);
 			if(ret != 0)
 			{
-				printk("ConfigDelMonitorSet error\n");
+				rtbprintk("ConfigDelMonitorSet error\n");
 			}
 			break;
 		case NOTIFY_TYPE_DELITEM:
-			printk("NOTIFY_TYPE_DELITEM\n");
+			rtbprintk("NOTIFY_TYPE_DELITEM\n");
 			ret = ConfigDelMonitorItem(preplnotify);
 			if(ret != 0)
 			{
-				printk("ConfigDelMonitorItem error\n");
+				rtbprintk("ConfigDelMonitorItem error\n");
 			}
 			break;
 		case NOTIFY_TYPE_DELALL:
-			printk("NOTIFY_TYPE_DELALL\n");
+			rtbprintk("NOTIFY_TYPE_DELALL\n");
 			ret = ConfigDelAllMonitorSet();
 			if(ret != 0)
 			{
-				printk("ConfigDelAllMonitorSet error\n");
+				rtbprintk("ConfigDelAllMonitorSet error\n");
 			}
 			break;
 		case NOTIFY_TYPE_QUERY_RUNNING_STATUS:
-			printk("NOTIFY_TYPE_QUERY_RUNNING_STATUS\n");
+			rtbprintk("NOTIFY_TYPE_QUERY_RUNNING_STATUS\n");
             notify_user_status(NOTIFY_TYPE_QUERY_RUNNING_STATUS,FileReplData.Config.bNormalRunning);
 			break;
 		case NOTIFY_TYPE_QUERY_LAST_SHUTDOWN_STATUS:
-			printk("NOTIFY_TYPE_QUERY_LAST_SHUTDOWN_STATUS\n");
+			rtbprintk("NOTIFY_TYPE_QUERY_LAST_SHUTDOWN_STATUS\n");
 			FileReplData.Config.dwLastNormalShutdown = systemrunning;
             notify_user_status(NOTIFY_TYPE_QUERY_LAST_SHUTDOWN_STATUS,FileReplData.Config.dwLastNormalShutdown);
 			break;
 		case NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS:
-			printk("NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS\n");
+			rtbprintk("NOTIFY_TYPE_RESET_LAST_SHUTDOWN_STATUS\n");
 			FileReplData.Config.dwLastNormalShutdown = systemrunning;
 			break;
 		default:
@@ -149,7 +149,7 @@ int process_netlink_cmd(int dest, void *buf, int len)
 
 int process_hello_set(int dest, void *buf, int len)
 {
-	printk(KERN_ALERT "In process_hello set! %s\n", (char *)buf);
+	rtbprintk(KERN_ALERT "In process_hello set! %s\n", (char *)buf);
 	memcpy(buf, "test !", 13);
 	netlink_to_user(dest, buf, 13);
 	return NET_OK;
@@ -194,13 +194,13 @@ void netlink_recv_packet(struct sk_buff *__skb)
 {
 	struct sk_buff *skb;
 	struct nlmsghdr *nlhdr;
-	printk("netlink_recv_packet in.....\n");
+	rtbprintk("netlink_recv_packet in.....\n");
 	skb = skb_get(__skb);
-	printk("rtb: skb->len is %d. nlmsghdr is %d.\n",skb->len,sizeof(struct nlmsghdr));
+	rtbprintk("rtb: skb->len is %d. nlmsghdr is %d.\n",skb->len,sizeof(struct nlmsghdr));
 	if(skb->len >= sizeof(struct nlmsghdr))
 	{
 		nlhdr = (struct nlmsghdr *)skb->data;
-		printk("get nlmsg_len %d.\n",nlhdr->nlmsg_len);
+		rtbprintk("get nlmsg_len %d.\n",nlhdr->nlmsg_len);
 		if(nlhdr->nlmsg_len >= sizeof(struct nlmsghdr) &&
 				__skb->len >= nlhdr->nlmsg_len)
 		{
@@ -208,7 +208,7 @@ void netlink_recv_packet(struct sk_buff *__skb)
 		}
 	}
 	else
-		printk(KERN_ALERT "Kernel receive msg length error!\n");
+		rtbprintk(KERN_ALERT "Kernel receive msg length error!\n");
 }
 
 

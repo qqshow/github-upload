@@ -142,7 +142,7 @@ int find_symbol_address_from_file(struct kernsym *sym, const char *filename) {
 
 	if (IS_ERR(f)) {
 		ret = PTR_ERR(f);
-		printk(PKPRE "Unable to open file %s\n", filename);
+		rtbprintk(PKPRE "Unable to open file %s\n", filename);
 		goto out_nofilp;
 	}
 
@@ -176,7 +176,7 @@ int find_symbol_address_from_file(struct kernsym *sym, const char *filename) {
 				sym->size = sym->end_addr - sym->addr;
 				sym->new_size = sym->size;
 
-				//printk(PKPRE "From %s, found %s end addr at %lx (total size %lu)\n", filename, sym->name, sym->end_addr, sym->size);
+				//rtbprintk(PKPRE "From %s, found %s end addr at %lx (total size %lu)\n", filename, sym->name, sym->end_addr, sym->size);
 
 				ret = 0;
 
@@ -201,7 +201,7 @@ int find_symbol_address_from_file(struct kernsym *sym, const char *filename) {
 
 				sym->addr = (unsigned long *) str2long(sys_string, NULL, 16);
 
-				//printk(PKPRE "From %s, found %s start addr at %lx\n", filename, sym->name, sym->addr);
+				//rtbprintk(PKPRE "From %s, found %s start addr at %lx\n", filename, sym->name, sym->addr);
 
 				kfree(sys_string);
 
@@ -239,7 +239,7 @@ int find_symbol_address(struct kernsym *sym, const char *symbol_name) {
 	#else
 	struct new_utsname *uts = utsname();
 	#endif
-	printk("RTB: find_symbol_address %s.\n",symbol_name);
+	rtbprintk("RTB: find_symbol_address %s.\n",symbol_name);
 	sym->name = symbol_name;
 
 	ret = find_symbol_address_from_file(sym, "/proc/kallsyms");
@@ -268,7 +268,7 @@ int find_symbol_address(struct kernsym *sym, const char *symbol_name) {
 	out:
 
 //	if (IN_ERR(ret))
-//		printk(PKPRE "Failed to find symbol address for %s\n", symbol_name);
+//		rtbprintk(PKPRE "Failed to find symbol address for %s\n", symbol_name);
 
 	return ret;
 }

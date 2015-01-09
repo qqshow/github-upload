@@ -42,11 +42,11 @@ int createiolog(char *iologpath, PLOG_FILE iologfile, int iologfilesize)
 	int ret = -1;
 	struct file *filep = NULL;
 	//filep = file_open(iologpath, O_WRONLY | O_CREAT, 777);     
-	printk("RTB: createiolog %s.\n",iologpath);
+	rtbprintk("RTB: createiolog %s.\n",iologpath);
 	filep = file_open(iologpath,O_WRONLY | O_CREAT,777);
 	if (IS_ERR(filep))	
 	{
-        printk("RTB: createiolog error\n");
+        rtbprintk("RTB: createiolog error\n");
 		notify_user_status(NOTIFY_TYPE_CLIENT_ERROR,(long)filep);
         return ret;
 	}    
@@ -96,7 +96,7 @@ int createiologformkdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
     iologpath = kzalloc(NAME_MAX,GFP_KERNEL);
 	snprintf(iologpath, NAME_MAX, "%s%lld", iologdir,ullGlobalSeqNo);
 
-    printk("RTB: creatiologformkdir iologpath %s. strlen %d.\n",iologpath,strlen(iologpath));
+    rtbprintk("RTB: creatiologformkdir iologpath %s. strlen %d.\n",iologpath,strlen(iologpath));
 
 #ifdef ASYNC_IOWRITE
     piowc = kzalloc(sizeof(IOWRITE_CONTEXT), GFP_KERNEL);
@@ -110,7 +110,7 @@ int createiologformkdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 #else
     iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
     if(iret != 0)
-    	printk("create io log error.\n");
+    	rtbprintk("create io log error.\n");
 
 #endif
 	
@@ -148,7 +148,7 @@ int createiologforcreatefile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulong
 		iologfile->hdr.ullSeqNo = ullSeqNo;
         iologfile->hdr.ullGolbalSeqNo = ullGlobalSeqNo;
         iologfile->hdr.liSystemTime.QuadPart = timesecs;
-		//printk("RTB: timesec is %ld.\n",timesecs);
+		//rtbprintk("RTB: timesec is %ld.\n",timesecs);
 	
 		iologfile->hdr.ulLogSize = sizeof(LOG_FILE);
 	
@@ -168,7 +168,7 @@ int createiologforcreatefile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulong
 #else
         iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
     	if(iret != 0)
-    		printk("create io log error.\n");
+    		rtbprintk("create io log error.\n");
 
 #endif
 		
@@ -231,7 +231,7 @@ int createiologforrmdir(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 #else
         iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
     	if(iret != 0)
-    		printk("create io log error.\n");
+    		rtbprintk("create io log error.\n");
 
 #endif
 
@@ -291,7 +291,7 @@ int createiologforrmfile(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong
 #else
         iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
     	if(iret != 0)
-    		printk("create io log error.\n");
+    		rtbprintk("create io log error.\n");
 
 #endif
 		
@@ -350,7 +350,7 @@ int createiologforerror(ulonglong ullSeqNo,ulonglong ullGlobalSeqNo, ulonglong t
 #else
         iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
     	if(iret != 0)
-    		printk("create io log error.\n");
+    		rtbprintk("create io log error.\n");
 
 #endif
 		
@@ -414,7 +414,7 @@ int createiologforrename(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong
 #else
         iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
     	if(iret != 0)
-    		printk("create io log error.\n");
+    		rtbprintk("create io log error.\n");
 
 #endif
 		
@@ -480,7 +480,7 @@ int createiologforcreatesymlink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ul
 #else
     iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 	if(iret != 0)
-		printk("create io log error.\n");
+		rtbprintk("create io log error.\n");
 
 #endif
 	
@@ -546,7 +546,7 @@ int createiologforcreatelink(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulong
 #else
         iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 		if(iret != 0)
-			printk("create io log error.\n");
+			rtbprintk("create io log error.\n");
 
 #endif
 
@@ -579,7 +579,7 @@ int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 		iologfile = vmalloc(iologfilelen);
 		if(iologfile == NULL)
 		{
-		  printk("RTB: kmalloc error in createiologforwrite.\n");
+		  rtbprintk("RTB: kmalloc error in createiologforwrite.\n");
 		  iret = -1;
 		  return iret;
 		}
@@ -613,7 +613,7 @@ int createiologforwrite(ulonglong ullSeqNo, ulonglong ullGlobalSeqNo, ulonglong 
 		iret = createiolog(iologpath,iologfile,iologfile->hdr.ulLogSize);
 		if(iret != 0)
 		{
-			printk("create io log error. iologpath is %s.\n",iologpath);
+			rtbprintk("create io log error. iologpath is %s.\n",iologpath);
 			notify_user_status(NOTIFY_TYPE_CLIENT_ERROR,-2);
 		}
 #endif		

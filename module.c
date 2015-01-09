@@ -35,11 +35,21 @@ static struct task_struct * _tsk;
 
 module_param(sysctl, int, 0);
 
+#define DEBUG_PRINT
+int rtbprintk(const char *fmt, ...)
+{
+	int ret = 0;
+#ifdef DEBUG_PRINT
+	ret = printk(fmt);
+#endif
+
+	return ret;
+}
 
 
 static int myreboot(struct notifier_block *self, unsigned long event, void *data)
 {
-    printk(KERN_ALERT "Just a test! Event code: %li! System reboot now...", event);
+    rtbprintk(KERN_ALERT "Just a test! Event code: %li! System reboot now...", event);
     FileReplData.Config.dwLastNormalShutdown = 2;
     SaveConfig();
     return NOTIFY_OK;
@@ -67,8 +77,8 @@ int init_rtbackup(void) {
 
 	int ret;
 
-	printk(KERN_ALERT "Init rtbackup!\n");
-	printk("RTB: V1.0.0.3\n");
+	rtbprintk(KERN_ALERT "Init rtbackup!\n");
+	rtbprintk("RTB: V1.0.0.4\n");
 	// get needed kernel function address
 	ret = kernfunc_init();
 
@@ -86,16 +96,16 @@ int init_rtbackup(void) {
 #endif
 	if(NULL == netlink_fd)
 	{
-		printk(KERN_ALERT "Init netlink failed!\n");
+		rtbprintk(KERN_ALERT "Init netlink failed!\n");
 		return -1;
 	}
-	printk(KERN_ALERT "Init netlink success!\n");
+	rtbprintk(KERN_ALERT "Init netlink success!\n");
 
     // load needed monitor set and files
 	ret = InitMonitorSet();
 	if (IN_ERR(ret))
 	{
-		printk("initmonitorset error.\n");
+		rtbprintk("initmonitorset error.\n");
 		return ret;
 	}	
 
@@ -106,12 +116,12 @@ int init_rtbackup(void) {
 
     if (IS_ERR(_tsk)) 
     {
-        printk(KERN_INFO "create iowrite thread error!\n"); 
+        rtbprintk(KERN_INFO "create iowrite thread error!\n"); 
         return -2;
     }     
     else
     {
-        printk(KERN_INFO "create iowrite thread ok!\n");  
+        rtbprintk(KERN_INFO "create iowrite thread ok!\n");  
     }   
 
 
@@ -137,7 +147,7 @@ static void exit_rtbackup(void) {
 	//restore vfs function
 	int ret = 0;
 	undo_hijack_syscalls();
-	printk(PKPRE "removed from kernel\n");
+	rtbprintk(PKPRE "removed from kernel\n");
 
 	unregister_reboot_notifier(&myreboot_notifier);
 #if(LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
@@ -150,11 +160,11 @@ static void exit_rtbackup(void) {
     {  
         ret = kthread_stop(_tsk);  
 
-        printk(KERN_INFO "First thread function has stopped ,return %d\n", ret);
+        rtbprintk(KERN_INFO "First thread function has stopped ,return %d\n", ret);
     }  
     
 	UninitMonitorSet();
-	printk(KERN_ALERT "Exit netlink!\n");
+	rtbprintk(KERN_ALERT "Exit netlink!\n");
 
 	return;
 }
@@ -165,5 +175,5 @@ module_exit(exit_rtbackup);
 MODULE_AUTHOR("lb");
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Real Time Backup(RtBackup) Module");
-MODULE_VERSION("1.0.0.3");
+MODULE_VERSION("1.0.0.4");
 

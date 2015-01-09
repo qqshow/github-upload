@@ -172,14 +172,14 @@ int symbol_hijack(struct kernsym *sym, const char *symbol_name, unsigned long *c
 	if (IN_ERR(ret))
 		return ret;
 	if (*(u8 *)sym->addr == OP_JMP_REL32) {
-		printk(PKPRE "error: %s already appears to be hijacked\n", symbol_name);
+		rtbprintk(PKPRE "error: %s already appears to be hijacked\n", symbol_name);
 		return -EFAULT;
 	}
 
 	sym->new_addr = malloc(sym->size);
 
 	if (sym->new_addr == NULL) {
-		printk(PKPRE
+		rtbprintk(PKPRE
 			"Failed to allocate buffer of size %lu for %s\n",
 			sym->size, sym->name);
 		return -ENOMEM;
@@ -201,7 +201,7 @@ int symbol_hijack(struct kernsym *sym, const char *symbol_name, unsigned long *c
 		--end_addr;
 
 	if (orig_addr == end_addr) {
-		printk(PKPRE
+		rtbprintk(PKPRE
 			"A spurious symbol \"%s\" (address: %p) seems to contain only zeros\n",
 			sym->name,
 			sym->addr);
@@ -215,7 +215,7 @@ int symbol_hijack(struct kernsym *sym, const char *symbol_name, unsigned long *c
 
 		rtb_insn_get_length(&insn);
 		if (insn.length == 0) {
-			printk(PKPRE
+			rtbprintk(PKPRE
 				"Failed to decode instruction at %p (%s+0x%lx)\n",
 				(const void *)orig_addr,
 				sym->name,

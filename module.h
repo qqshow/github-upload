@@ -97,7 +97,6 @@
 #define MODULE_NAME "rtbackup"
 #define PKPRE "[" MODULE_NAME "] "
 #define MAX_FILE_LEN 256
-#define TPE_HARDCODED_PATH_LEN 1024
 
 #define LOG_FLOODTIME 5
 #define LOG_FLOODBURST 5
@@ -186,6 +185,7 @@ int getabsfullpath(const char *pathname, char *abspath);
 int getabsfullpathfromstructfile(struct file * file, char *abspath);
 
 
+int rtbprintk(const char *fmt, ...);
 
 
 

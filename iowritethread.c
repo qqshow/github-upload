@@ -44,7 +44,7 @@ int thread_iowrite(void *data)
 
     PIOWRITE_CONTEXT piowc = NULL;
 	int iret = 0;
-    printk(KERN_INFO "RTB: thread_iowrite..........\n");
+    rtbprintk(KERN_INFO "RTB: thread_iowrite..........\n");
     do {
             wait_for_completion_timeout(&comp,1000);
             //complete(&comp);
@@ -62,7 +62,7 @@ int thread_iowrite(void *data)
                     iret = createiolog(piowc->iologpath, piowc->logfile, piowc->logfile->hdr.ulLogSize);
 					if(iret != 0)
 					{
-						printk("thread iowrite: createiolog error. %s.\n",piowc->iologpath);
+						rtbprintk("thread iowrite: createiolog error. %s.\n",piowc->iologpath);
 						notify_user_status(NOTIFY_TYPE_CLIENT_ERROR,-2);
 					}
          
