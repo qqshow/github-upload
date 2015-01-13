@@ -369,7 +369,7 @@ int getabsfullpathfromnd(struct nameidata *nd,struct dentry *dentry,char * abspa
 	strncat(abspath, "/", strlen("/"));
 	strncat(abspath, dentry->d_name.name, dentry->d_name.len);
 #else
-	pathname = d_path(nd->dentry,nd->mnt, tmp, PATH_MAX);
+	pathname = d_path(&nd->path, tmp, PATH_MAX);
 	strcat(abspath,pathname);
 	if(tmp)
 		free_page((unsigned long)tmp);
