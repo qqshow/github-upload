@@ -334,6 +334,45 @@ int getabsfullpathfromstructfile(struct file * file, char *abspath)
 	
 }
 
+/**
+ * Get abs path name from nameidata
+ * @param  nd     nameidata *
+ * @param  dentry dentry for file
+ * @param  abspath buffer to store abspath
+ * @return         0 for success
+ */
+int getabsfullpathfromnd(struct nameidata *nd,struct dentry *dentry,char * abspath)
+{
+	int ret = 0;
+	char *tmp = NULL;
+	char *pathname;
+	
+#if(LINUX_VERSION_CODE > KERNEL_VERSION(2,6,18))
+	struct path path;	
+#endif
+
+	if(nd == NULL || dentry == NULL )
+	{
+			return ret;
+	}
+
+	tmp = (char *)__get_free_page(0);
+	if(!tmp){
+		return -ENOMEM;;
+	}
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 25)
+	pathname = d_path(nd->dentry,nd->mnt, tmp, PATH_MAX);
+	strcat(abspath,pathname);
+	if(tmp)
+		free_page((unsigned long)tmp);
+	strncat(abspath, "/", strlen("/"));
+	strncat(abspath, dentry->d_name.name, dentry->d_name.len);
+#else
+
+#endif
 
 
-
+	return ret;
+	
+} 

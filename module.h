@@ -183,7 +183,7 @@ int getabsparentpathfromdentry(struct dentry *dentry,char *abspath);
 int getabsfullpathfromdentry(struct dentry *dentry, char *abspath);
 int getabsfullpath(const char *pathname, char *abspath);
 int getabsfullpathfromstructfile(struct file * file, char *abspath);
-
+int getabsfullpathfromnd(struct nameidata *nd,struct dentry *dentry,char * abspath);
 
 int rtbprintk(const char *fmt, ...);
 

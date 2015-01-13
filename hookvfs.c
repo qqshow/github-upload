@@ -315,11 +315,6 @@ int (rtb_vfs_create)(struct inode *dir, struct dentry *dentry, int mode,
     ULONGLONG ullGlobalSeqno = 0;
     ULONGLONG timesec = 0;  
 
-/*	char *testbuff = NULL;
-	char *pathPtr = NULL;
-	int testbuffsize = PATH_MAX;
-	*/
-
     if(!FileReplData.Config.bNormalRunning || !FileReplData.Config.bValid)
     {
         return run(dir,dentry,mode,nd);
@@ -330,15 +325,6 @@ int (rtb_vfs_create)(struct inode *dir, struct dentry *dentry, int mode,
 		rtbprintk("open file\n");
 		goto out;
 	}
-	rtbprintk("create new file\n");
-/*
-	testbuff = kmalloc(PATH_MAX,GFP_KERNEL);
-	memset(testbuff,0,PATH_MAX);
-	pathPtr = d_path(nd->dentry, nd->mnt, testbuff, testbuffsize);
-	printk("RTB: test: %s.\n",pathPtr);
-	printk("RTB: test: %s.\n",testbuff);
-	*/
-
 	
     iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
@@ -354,7 +340,7 @@ int (rtb_vfs_create)(struct inode *dir, struct dentry *dentry, int mode,
         rtbprintk("vfs_create.....\n");
     }
     
-	iret = getabsfullpathfromdentry(dentry,abspath);
+    iret = getabsfullpathfromnd(nd,dentry,abspath);
 	rtbprintk("vfs_create file %s\n",abspath);
 
      pmfe = GetMonitorFileEntryByabspath(abspath);
