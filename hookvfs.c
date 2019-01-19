@@ -325,7 +325,6 @@ int (rtb_vfs_create)(struct inode *dir, struct dentry *dentry, int mode,
 		rtbprintk("open file\n");
 		goto out;
 	}
-	
     iologdir = kmalloc(PATH_MAX, GFP_KERNEL);
 	abspath = kmalloc(PATH_MAX, GFP_KERNEL);
 	if(abspath == NULL || iologdir == NULL)
